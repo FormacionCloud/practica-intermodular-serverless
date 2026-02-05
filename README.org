@@ -227,7 +227,7 @@ A continuación, para realizar el despliegue, ejecuta el siguiente comando:
   sam deploy --guided
 #+end_src
 
-Indica un nombre para el stack que incluya tu *nombre y apellidos*. Al finalizar, comprueba que se han creado dos funciones accediendo al *servicio Lambda* en la consola de AWS.
+Indica un nombre para el stack que incluya tu *nombre y apellidos*. Al finalizar, comprueba que se han creado dos funciones accediendo al *servicio Lambda* en la consola de AWS. Accede también a la consola de *DynamoDB* y observa que se ha creado la tabla correspondiente.
 
 #+begin_quote
 [!NOTE]
