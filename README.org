@@ -1,0 +1,121 @@
+* Práctica intermodular serverless
+#+begin_quote
+[!IMPORTANT]
+Esta práctica está basada en la aplicación *Polly Notes* del curso de AWS Developing.
+#+end_quote
+
+Esta práctica tiene como objetivo *desarrollar una aplicación serverless* en AWS. Los servicios y tecnologías a utilizar serán:
+- Lambda
+- API Gateway
+- DynamoDB
+- S3
+- Polly
+- Translate
+- SAM
+- Cloudwatch
+- XRay
+
+La aplicación que desarrollaremos será una *aplicación web completa*, formada por un *frontend* creado como *Aplicación de una sola página*, o /Single Page Application/ (SPA), y un *backend* compuesto de una *API REST*. La aplicación permitirá al usuario realizar operaciones *CRUD* (/Create/, /Read/, /Update/ y /Delete/) sobre un *conjunto de notas*. Además, también podrá activar un *procesamiento* sobre cada nota, consistente en *sintetizar audio* a partir del texto y *traducir* el texto de la nota a otro idioma.
+
+** Esquema de la aplicación
+#+begin_src plantuml :file ./imagenes/00-arquitectura.png :exports results
+  @startuml VPC
+  !define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v19.0/dist
+  !include AWSPuml/AWSCommon.puml
+  !include AWSPuml/AWSSimplified.puml
+  !include AWSPuml/Compute/LambdaLambdaFunction.puml
+  !include AWSPuml/Database/DynamoDB.puml
+  !include AWSPuml/Groups/Generic.puml
+  !include AWSPuml/ArtificialIntelligence/RekognitionImage.puml
+  !include AWSPuml/Storage/SimpleStorageServiceBucket.puml
+  !include AWSPuml/NetworkingContentDelivery/APIGateway.puml
+  !include AWSPuml/General/Client.puml
+  !include AWSPuml/General/User.puml
+  !include AWSPuml/ArtificialIntelligence/Polly.puml
+  !include AWSPuml/ArtificialIntelligence/Translate.puml
+  !include AWSPuml/SecurityIdentityCompliance/Cognito.puml
+  !include AWSPuml/ManagementGovernance/CloudWatch.puml
+  !include AWSPuml/NetworkingContentDelivery/CloudFront.puml
+  !include AWSPuml/DeveloperTools/ToolsandSDKs.puml
+  !include AWSPuml/DeveloperTools/XRay.puml
+  !include AWSPuml/Groups/AWSAccount.puml
+
+  left to right direction
+
+
+  AWSAccountGroup(cuenta, "Cuenta AWS") {
+    CloudWatch(cloudwatch, "Cloudwatch", "")
+    ToolsandSDKs(sdks, "Herramientas\nSAM\nIDEs\nSDK", "")
+    XRay(xray, "XRay", "")
+    Client(cliente, "Frontend", "")
+    CloudFront(cdn, "CloudFront", "")
+    SimpleStorageServiceBucket(s3front, "S3", "")
+    User(usuario, "Usuario", "")
+    APIGateway(api, "API", "")
+    Cognito(cognito, "Cognito\nUserPool", "")
+    LambdaLambdaFunction(lambdaGetNotes, "Leer notas", "")
+    LambdaLambdaFunction(lambdaGetNote, "Leer nota", "")
+    LambdaLambdaFunction(lambdaCreate, "Crear nota", "")
+    LambdaLambdaFunction(lambdaEdit, "Editar nota", "")
+    LambdaLambdaFunction(lambdaDelete, "Borrar nota", "")
+    LambdaLambdaFunction(lambdaProcess, "Procesar", "")
+    DynamoDB(dynamodb, "BD", "")
+    SimpleStorageServiceBucket(s3back, "S3", "")
+    Polly(Polly, "Polly", "")
+    Translate(Translate, "Translate", "")
+  }
+
+  usuario --> cliente
+  cliente -> cdn
+  cdn -> s3front
+  cliente --> api
+  cliente -[dashed]-> cognito
+  api <-> cognito
+  api --> lambdaGetNotes: "GET /notes"
+  api --> lambdaCreate : "POST /notes"
+  api --> lambdaGetNote: "GET /notes/{id}"
+  api --> lambdaEdit : "PUT /notes/{id}"
+  api --> lambdaDelete : "DELETE /notes/{id}"
+  api --> lambdaProcess: "POST /notes/{id}"
+  lambdaGetNotes --> dynamodb
+  lambdaCreate --> dynamodb
+  lambdaGetNote --> dynamodb
+  lambdaEdit --> dynamodb
+  lambdaDelete --> dynamodb
+  lambdaProcess --> dynamodb
+  lambdaProcess --> s3back
+  lambdaProcess --> Polly
+  lambdaProcess --> Translate
+  @enduml
+#+end_src
+
+#+RESULTS:
+[[file:./imagenes/00-arquitectura.png]]
+
+** Fases de desarrollo
+Estructuraremos el desarrollo de la aplicación en *3 fases*:
+1. *Fase 1*
+   1. Diseño de la base de datos
+   2. Creación de la *base de datos*
+   3. Creación de las *funciones lambda* que constituirán el backend
+   4. Testeo del backend
+   5. Despliegue del backend mediante *AWS SAM*
+2. *Fase 2*
+   1. Despliegue del *frontend* en S3
+   2. Creación de un *CDN* (Cloudfront) para el frontend
+   3. Creación de la *API*
+   4. Conexión de la API con las funciones lambda de backend
+   5. Testeo de la API
+   6. Despliegue de la API mediante *AWS SAM*
+3. *Fase 3*
+   1. Crear un *repositorio de usuarios* (Cognito User Pool)
+   2. Conectar la API con el repositorio de usuarios para *autenticación*
+   3. Añadir elementos para *monitorizar* el correcto funcionamiento de la aplicación (Cloudwatch y XRay
+   4. Testeo y simulación de fallos
+   5. Implementación de cambios adicionales en la aplicación
+
+* Fase 1
+
+* Fase 2
+
+* Fase 3
