@@ -1,6 +1,11 @@
 * Práctica intermodular serverless
 #+begin_quote
 [!IMPORTANT]
+Utilizaremos la *Landing Zone* para realizar esta práctica.
+#+end_quote
+
+#+begin_quote
+[!IMPORTANT]
 Esta práctica está basada en la aplicación *Polly Notes* del curso de AWS Developing.
 #+end_quote
 
@@ -114,6 +119,44 @@ Estructuraremos el desarrollo de la aplicación en *3 fases*:
    4. Testeo y simulación de fallos
    5. Implementación de cambios adicionales en la aplicación
 
+* Preparación previa e instrucciones de entrega
+Esta práctica *se entregará a través de GitHub*. Para poder realizarla, debes:
+- *Instalar en tu equipo* el editor *Visual Studio Code*
+- Tener una *cuenta de GitHub*
+
+En primer lugar, debes *realizar un fork* del repositorio. Un fork es una *copia del repositorio* que se almacena en tu cuenta de GitHub. De esta manera, el repositorio *será copiado a tu cuenta* y podrás *realizar cambios en él*.
+
+[[./imagenes/02-fork.gif]]
+
+Una vez hecho el fork, deberás *clonar tu repositorio* en tu equipo local, a través de Visual Studio Code.
+
+#+begin_quote
+[!IMPORTANT]
+Recuerda que debes clonar *TU* copia del repositorio, el que está en tu cuenta.
+#+end_quote
+
+Debes realizar los cambios de código en tu *copia local* del repositorio. Conforme vayas realizando pruebas y avanzando en la práctica, deberás ir *sincronizando los cambios* en tu repositorio de GitHub.
+
+Recuerda que *puedes realizar cambios en ficheros*, *crear ficheros nuevos* o *crear nuevas carpetas* dentro de la carpeta del repositorio. Podrás añadir todos esos cambios y sincronizarlos con tu repositorio en GítHub.
+
+#+begin_quote
+[!IMPORTANT]
+No realices cambios en los ficheros *README* para evitar conflictos en caso de actualizar los enunciados de la práctica
+#+end_quote
+
+Para realizar la entrega de la práctica, haz una *Pull Request* cuando hayas finalizado. De esta manera, los cambios de tu repositorio se notificarán en el repositorio de la práctica y podremos corregirla y darte realimentación.
+
+[[./imagenes/03-fork.gif]]
+
+Por último, es posible que realicemos *cambios en el enunciado* o añadamos nuevo contenido al repositorio. Puedes comprobar si hay cambios nuevos pulsando en el botón ~Sync fork~ de tu repositorio. Acuérdate de sincronizar antes de cada fase, o si recibes indicaciones de los profesores.
+
+#+begin_quote
+[!IMPORTANT]
+*No es necesario realizar capturas* en esta práctica. Simplemente, realiza las modificaciones en los ficheros correspondientes, sube los cambios a GitHub y ha una Pull Request.
+
+*No destruyas los recursos creados en AWS*. De esta manera, podremos comprobar lo que vayas haciendo. Recuerda que son servicios *serverless*, así que no tendrán apenas coste.
+#+end_quote
+
 * Fase 1
 En esta primera fase realizaremos la implementación del *backend* de la aplicación.
 
@@ -163,10 +206,26 @@ En esta primera fase realizaremos la implementación del *backend* de la aplicac
 [[file:./imagenes/01-fase1.png]]
 
 ** Diseño de la base de datos
+La base de datos se implementará mediante *DynamoDB*. De acuerdo con las buenas prácticas de diseño de bases de datos de tipo clave-valor, partiremos de los *casos de uso* de la aplicación, que son los siguientes:
+1. Un usuario debe poder ver todas sus notas
+2. Un usuario debe poder realizar acciones sobre una nota específica
+
+Partiendo de estos sencillos casos de uso, *responde a las siguientes preguntas*:
+- *¿Qué esquema de claves utilizarías?* Indica qué información almacenarías en la clave primaria de la tabla
+- ¿Utilizarías únicamente una *clave de partición*, o ves conveniente utilizar también una *clave de ordenación*? ¿Por qué?
+
+#+begin_quote
+[!NOTE]
+Incluye las respuestas en un fichero en tu repositorio. Por ejemplo, con el nombre ~respuestas.txt~.
+#+end_quote
 
 ** Creación de la *base de datos*
+Crea una tabla en DynamoDB *a través de la consola de AWS*. Utiliza *capacidad a demanda* (opción por defecto) y configura la *clave primaria* elegida en el punto anterior.
+
+Como nombre de la tabla, utiliza ~inter-serverless-manual-TUS_INICIALES~, sustituyendo ~TUS_INICIALES~ por el valor correspondiente.
 
 ** Creación de las *funciones lambda* que constituirán el backend
+Como puedes comprobar, en el repositorio hay una carpeta denominada ~proyecto~. Dentro de ella hay una estructura de carpetas para una *aplicación SAM*. Sin embargo, para empezar, *no utilizaremos SAM para el despliegue*. Haremos un *despliegue manual*, subiendo el código directamente a la consola. Más adelante realizaremos el despliegue mediante SAM.
 
 ** Testeo del backend
 
