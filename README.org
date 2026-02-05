@@ -126,7 +126,7 @@ Esta práctica *se entregará a través de GitHub*. Para poder realizarla, debes
 
 En primer lugar, debes *realizar un fork* del repositorio. Un fork es una *copia del repositorio* que se almacena en tu cuenta de GitHub. De esta manera, el repositorio *será copiado a tu cuenta* y podrás *realizar cambios en él*.
 
-[[./imagenes/02-fork.webm]]
+[[./imagenes/02-fork.webm.mp4]]
 
 Una vez hecho el fork, deberás *clonar tu repositorio* en tu equipo local, a través de Visual Studio Code.
 
@@ -146,7 +146,7 @@ No realices cambios en los ficheros *README* para evitar conflictos en caso de a
 
 Para realizar la entrega de la práctica, haz una *Pull Request* cuando hayas finalizado. De esta manera, los cambios de tu repositorio se notificarán en el repositorio de la práctica y podremos corregirla y darte realimentación.
 
-[[./imagenes/03-fork.webm]]
+[[./imagenes/03-fork.webm.mp4]]
 
 Por último, es posible que realicemos *cambios en el enunciado* o añadamos nuevo contenido al repositorio. Puedes comprobar si hay cambios nuevos pulsando en el botón ~Sync fork~ de tu repositorio. Acuérdate de sincronizar antes de cada fase, o si recibes indicaciones de los profesores.
 
