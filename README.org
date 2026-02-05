@@ -5,7 +5,7 @@ Utilizaremos la *Landing Zone* para realizar esta práctica.
 #+end_quote
 
 #+begin_quote
-[!IMPORTANT]
+[!NOTE]
 Esta práctica está basada en la aplicación *Polly Notes* del curso de AWS Developing.
 #+end_quote
 
