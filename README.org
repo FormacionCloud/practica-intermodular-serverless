@@ -115,6 +115,65 @@ Estructuraremos el desarrollo de la aplicación en *3 fases*:
    5. Implementación de cambios adicionales en la aplicación
 
 * Fase 1
+En esta primera fase realizaremos la implementación del *backend* de la aplicación.
+
+** Arquitectura de la solución a implementar
+#+begin_src plantuml :file ./imagenes/01-fase1.png :exports results
+  @startuml VPC
+  !define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v19.0/dist
+  !include AWSPuml/AWSCommon.puml
+  !include AWSPuml/AWSSimplified.puml
+  !include AWSPuml/Compute/LambdaLambdaFunction.puml
+  !include AWSPuml/Database/DynamoDB.puml
+  !include AWSPuml/Groups/Generic.puml
+  !include AWSPuml/ArtificialIntelligence/RekognitionImage.puml
+  !include AWSPuml/Storage/SimpleStorageServiceBucket.puml
+  !include AWSPuml/ArtificialIntelligence/Polly.puml
+  !include AWSPuml/ArtificialIntelligence/Translate.puml
+  !include AWSPuml/DeveloperTools/ToolsandSDKs.puml
+  !include AWSPuml/Groups/AWSAccount.puml
+
+  left to right direction
+
+
+  AWSAccountGroup(cuenta, "Cuenta AWS") {
+    ToolsandSDKs(sdks, "Herramientas\nSAM\nIDEs\nSDK", "")
+    LambdaLambdaFunction(lambdaGetNotes, "Leer notas", "")
+    LambdaLambdaFunction(lambdaGetNote, "Leer nota", "")
+    LambdaLambdaFunction(lambdaCreate, "Crear nota", "")
+    LambdaLambdaFunction(lambdaEdit, "Editar nota", "")
+    LambdaLambdaFunction(lambdaDelete, "Borrar nota", "")
+    LambdaLambdaFunction(lambdaProcess, "Procesar", "")
+    DynamoDB(dynamodb, "BD", "")
+    SimpleStorageServiceBucket(s3back, "S3", "")
+    Polly(Polly, "Polly", "")
+    Translate(Translate, "Translate", "")
+  }
+
+  lambdaGetNotes --> dynamodb
+  lambdaCreate --> dynamodb
+  lambdaGetNote --> dynamodb
+  lambdaEdit --> dynamodb
+  lambdaDelete --> dynamodb
+  lambdaProcess --> dynamodb
+  lambdaProcess --> s3back
+  lambdaProcess --> Polly
+  lambdaProcess --> Translate
+  @enduml
+#+end_src
+
+#+RESULTS:
+[[file:./imagenes/01-fase1.png]]
+
+** Diseño de la base de datos
+
+** Creación de la *base de datos*
+
+** Creación de las *funciones lambda* que constituirán el backend
+
+** Testeo del backend
+
+** Despliegue del backend mediante *AWS SAM*
 
 * Fase 2
 
