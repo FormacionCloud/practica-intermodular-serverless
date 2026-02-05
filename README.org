@@ -96,14 +96,12 @@ Estructuraremos el desarrollo de la aplicación en *3 fases*:
 2. *Fase 2*
    1. Despliegue del *frontend* en S3
    2. Creación de un *CDN* (Cloudfront) para el frontend
-   3. Creación de la *API*
-   4. Conexión de la API con las funciones lambda de backend
-   5. Testeo de la API
-   6. Despliegue de la API mediante *AWS SAM*
+   3. Creación de la *API*, *conexión* con el backend y despliegue mediante *AWS SAM*
+   4. Testeo de la API
 3. *Fase 3*
-   1. Crear un *repositorio de usuarios* (Cognito User Pool)
-   2. Conectar la API con el repositorio de usuarios para *autenticación*
-   3. Añadir elementos para *monitorizar* el correcto funcionamiento de la aplicación (Cloudwatch y XRay
+   1. Creación de un *repositorio de usuarios* (Cognito User Pool)
+   2. Conexión de la API con el repositorio de usuarios para *autenticación*
+   3. Adición de servicios para *monitorizar* el correcto funcionamiento de la aplicación (Cloudwatch y XRay)
    4. Testeo y simulación de fallos
    5. Implementación de cambios adicionales en la aplicación
 
