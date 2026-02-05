@@ -1,7 +1,11 @@
 // Clientes para interactuar con la API de AWS
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  PutCommand,
+} from "@aws-sdk/lib-dynamodb";
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
@@ -17,9 +21,9 @@ async function getNotesByUser(userId) {
   var params = {
     TableName: tableName,
     ExpressionAttributeValues: {
-      ":pk": userId,
+      ":userId": userId,
     },
-    KeyConditionExpression: "PK = :pk",
+    KeyConditionExpression: "userId= :userId",
   };
 
   // Petición a DynamoDB
@@ -27,4 +31,18 @@ async function getNotesByUser(userId) {
   return data.Items;
 }
 
-export { getNotesByUser };
+// Función para crear una nota para un usuario
+async function postNoteForUser(userId, noteId, noteText) {
+  // Parámetros de la petición de DynamoDB
+  // Petición PUT indicando la clave primaria: partición + ordenación
+  var params = {
+    TableName: tableName,
+    Item: { userId: userId, noteId: noteId, text: noteText },
+  };
+
+  // Petición a DynamoDB
+  const data = await ddbDocClient.send(new PutCommand(params));
+  return data;
+}
+
+export { getNotesByUser, postNoteForUser };

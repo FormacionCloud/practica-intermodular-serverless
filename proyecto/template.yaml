@@ -25,6 +25,26 @@ Resources:
           # Referencia al nombre de la tabla a través de una variable de entorno
           APP_TABLE: !Ref AppTable
 
+  # Función Lambda para crear una nota para un usuario
+  postNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/postNotes.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para crear una nota en la tabla
+      Policies:
+        # Política de permisos para interactuar con la tabla de DynamoDB. Permisos CRUD.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          # Referencia al nombre de la tabla a través de una variable de entorno
+          APP_TABLE: !Ref AppTable
+
   # TODO: Añadir las funciones que faltan a continuación
 
 
@@ -40,13 +60,13 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: atributo1 # TODO: cambiar
+        - AttributeName: userId # Si lo deseas, puedes cambiar el nombre de las claves. Recuerda actualizar el código también
           AttributeType: S
-        - AttributeName: atributo2 # TODO: cambiar
+        - AttributeName: noteId # Si lo deseas, puedes cambiar el nombre de las claves. Recuerda actualizar el código también
           AttributeType: S
       KeySchema:
-        - AttributeName: atributo1 # TODO: cambiar
+        - AttributeName: userId
           KeyType: HASH
-        - AttributeName: atributo2 # TODO: cambiar
+        - AttributeName: noteId
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
