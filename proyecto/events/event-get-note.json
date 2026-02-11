@@ -1,0 +1,7 @@
+{
+    "httpMethod": "GET",
+    "path": "/notes/id3",
+    "pathParameters": {
+        "id": "id3"
+    }
+}

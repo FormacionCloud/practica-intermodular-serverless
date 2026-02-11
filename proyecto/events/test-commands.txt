@@ -1,0 +1,21 @@
+#  Path
+----
+C:\Users\zuric\Documents\(NUBE)\Tareas pendientes\FC\code\practica-intermodular-serverless\proyecto
+
+# 1. Crear una nota
+aws lambda invoke --function-name sam-aep-postNotes-CP8sr7ubLLqA --payload fileb://events/event-post-notes.json events/salidas/salidapostNotes.json
+
+# 2. Obtener todas las notas de un usuario
+aws lambda invoke --function-name sam-aep-getNotes-XCmV0xxFbV9w --payload fileb://events/event-get-notes.json events/salidas/salidaGetNotes.json
+
+# 3. Obtener una nota específica
+aws lambda invoke --function-name sam-aep-getNote-VBCn6ajzQzrl --payload fileb://events/event-get-note.json events/salidas/salidaGetNote.json
+
+# 4. Actualizar una nota
+aws lambda invoke --function-name sam-aep-putNote-kQViejW0csQL --payload fileb://events/event-put-note.json events/salidas/salidaPutNote.json
+
+# 5. Eliminar una nota
+aws lambda invoke --function-name sam-aep-deleteNote-0Llzy6jNaptO --payload fileb://events/event-delete-note.json events/salidas/salidaDeleteNote.json
+
+# 6. Procesar una nota (sintetizar audio y traducir)
+aws lambda invoke --function-name sam-aep-processNote-pXyrLS84jJKt --payload fileb://events/event-process-note.json events/salidas/salidaProcessNote.json
