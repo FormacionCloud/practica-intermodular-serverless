@@ -1,8 +1,10 @@
 # Práctica intermodular serverless
 
-> [!IMPORTANT] Utilizaremos la **Landing Zone** para realizar esta práctica.
+> [!IMPORTANT]
+> Utilizaremos la **Landing Zone** para realizar esta práctica.
 
-> [!NOTE] Esta práctica está basada en la aplicación **Polly Notes** del curso de AWS Developing.
+> [!NOTE]
+> Esta práctica está basada en la aplicación **Polly Notes** del curso de AWS Developing.
 
 Esta práctica tiene como objetivo **desarrollar una aplicación serverless** en AWS. La aplicación que desarrollaremos será una **aplicación web completa**, formada por un **frontend** creado como **Aplicación de una sola página**, o *Single Page Application* (SPA), y un **backend** compuesto de una **API REST**. La aplicación permitirá al usuario realizar operaciones **CRUD** (*Create*, *Read*, *Update* y *Delete*) sobre un **conjunto de notas**. Además, también podrá activar un **procesamiento** sobre cada nota, consistente en **sintetizar audio** a partir del texto y **traducir** el texto de la nota a otro idioma.
 
