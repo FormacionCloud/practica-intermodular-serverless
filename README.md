@@ -53,13 +53,15 @@ Una vez tengas todo lo anterior, debes **realizar un fork** del repositorio de l
 
 Una vez hecho el fork, deberás **clonar tu repositorio** en tu equipo local, a través de Visual Studio Code.
 
-> [!IMPORTANT] Recuerda que debes clonar **TU** copia del repositorio, el que está en tu cuenta.
+> [!IMPORTANT]
+> Recuerda que debes clonar **TU** copia del repositorio, el que está en tu cuenta.
 
 Debes realizar los cambios de código en tu **copia local** del repositorio. Conforme vayas realizando pruebas y avanzando en la práctica, deberás ir **sincronizando los cambios** en tu repositorio de GitHub.
 
 Recuerda que **puedes realizar cambios en ficheros**, **crear ficheros nuevos** o **crear nuevas carpetas** dentro de la carpeta del repositorio. Podrás añadir todos esos cambios y sincronizarlos con tu repositorio en GítHub.
 
-> [!IMPORTANT] No realices cambios en los ficheros **README** para evitar conflictos en caso de actualizar los enunciados de la práctica
+> [!IMPORTANT]
+> No realices cambios en los ficheros **README** para evitar conflictos en caso de actualizar los enunciados de la práctica
 
 Para realizar la entrega de la práctica, haz una **Pull Request** cuando hayas finalizado. De esta manera, los cambios de tu repositorio se notificarán en el repositorio de la práctica y podremos corregirla y darte realimentación.
 
@@ -67,7 +69,8 @@ Para realizar la entrega de la práctica, haz una **Pull Request** cuando hayas 
 
 Por último, es posible que realicemos **cambios en el enunciado** o añadamos nuevo contenido al repositorio. Puedes comprobar si hay cambios nuevos pulsando en el botón `Sync fork` de tu repositorio. Acuérdate de sincronizar antes de cada fase, o si recibes indicaciones de los profesores. Una vez sincronizado tu repositorio en GitHub, **deberás sincronizar a continuación tu copia local** desde Visual Studio Code.
 
-> [!IMPORTANT] **No es necesario realizar capturas** en esta práctica. Simplemente, realiza las modificaciones en los ficheros correspondientes, sube los cambios a GitHub y haz una Pull Request.
+> [!IMPORTANT] 
+> **No es necesario realizar capturas** en esta práctica. Simplemente, realiza las modificaciones en los ficheros correspondientes, sube los cambios a GitHub y haz una Pull Request.
 > 
 > **No destruyas los recursos creados en AWS**. De esta manera, podremos comprobar lo que vayas haciendo. Recuerda que son servicios **serverless**, así que no tendrán apenas coste.
 
@@ -97,7 +100,8 @@ Partiendo de estos sencillos casos de uso, **responde a las siguientes preguntas
 -   **¿Qué esquema de claves utilizarías?** Indica qué información almacenarías en la clave primaria de la tabla
 -   ¿Utilizarías únicamente una **clave de partición**, o ves conveniente utilizar también una **clave de ordenación**? ¿Por qué?
 
-> [!NOTE] Incluye las respuestas en un fichero en tu repositorio. Por ejemplo, con el nombre `respuestas.txt`.
+> [!NOTE]
+> Incluye las respuestas en un fichero en tu repositorio. Por ejemplo, con el nombre `respuestas.txt`.
 
 
 
@@ -131,7 +135,8 @@ sam deploy --guided
 
 Indica un nombre para el stack que incluya tu **nombre y apellidos**. Al finalizar, comprueba que se han creado dos funciones accediendo al **servicio Lambda** en la consola de AWS. Accede también a la consola de **DynamoDB** y observa que se ha creado la tabla correspondiente.
 
-> [!NOTE] Si observas el código de una de las funciones creadas en la consola de AWS, observarás que se ha subido toda la carpeta junto con una carpeta `node_modules`, que incluye las dependencias y librerías del proyecto.
+> [!NOTE]
+> Si observas el código de una de las funciones creadas en la consola de AWS, observarás que se ha subido toda la carpeta junto con una carpeta `node_modules`, que incluye las dependencias y librerías del proyecto.
 
 Una vez creadas las funciones, puedes **editar el código** desde la consola de AWS para realizar **cambios y pruebas rápidas** (recuerda pulsar en el botón de **desplegar** al finalizar). También puedes **abrir el código de una función desde Visual Studio Code**. Eso sí, recuerda que, si haces un cambio por alguno de estos métodos, deberás posteriormente **actualizar el código de la carpeta del repositorio** para dejarlo igual.
 
@@ -143,9 +148,11 @@ sam deploy
 
 El código de las funciones se encuentra convenientemente **comentado**. **Inspecciona detalladamente el código** para entender cómo funciona.
 
-> [!IMPORTANT] El lenguaje elegido es JavaScript. No se pretende que se comprenda el 100% del código si no se tiene experiencia con dicho lenguaje. Será necesaria únicamente una comprensión a alto nivel.
+> [!IMPORTANT]
+> El lenguaje elegido es JavaScript. No se pretende que se comprenda el 100% del código si no se tiene experiencia con dicho lenguaje. Será necesaria únicamente una comprensión a alto nivel.
 
-> [!IMPORTANT] El código de las funciones Lambda hace uso de un fichero de librería, `src/auxFunctions.mjs`, en el que están definidas las acciones a realizar, como consultas en la base de datos, creación de notas, etc. De esta manera se separa la lógica del controlador de la lógica de negocio.
+> [!IMPORTANT]
+> El código de las funciones Lambda hace uso de un fichero de librería, `src/auxFunctions.mjs`, en el que están definidas las acciones a realizar, como consultas en la base de datos, creación de notas, etc. De esta manera se separa la lógica del controlador de la lógica de negocio.
 
 Las funciones que vamos a desarrollar serán ejecutadas por la por la **API** que desarrollaremos en la fase 2 mediante [integración proxy](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html). Esto quiere decir que el **evento** que le llegará al manejador (*handler*) de la función tendrá un [formato específico](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format). Puedes observar que el código de las funciones hace referencia a algunas de las propiedades definidas en ese formato, como `event.httpMethod` o `event.body`.
 
@@ -160,11 +167,13 @@ Para probar las funciones, se proporciona un conjunto de ficheros con **ejemplos
 aws lambda invoke --function-name NOMBRE_FUNCION --payload fileb://events/NOMBRE_FICHERO_EVENTO.json salida.json
 ```
 
-> [!NOTE] Recuerda que, tal como hemos explicado antes, los eventos tienen el [formato específico de la integración proxy de Lambda](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format).
+> [!NOTE]
+> Recuerda que, tal como hemos explicado antes, los eventos tienen el [formato específico de la integración proxy de Lambda](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format).
 
 De esta manera, el resultado devuelto por la función será guardado en el fichero `salida.json`. Puedes visualizar su contenido en el editor para ver el resultado devuelto por la función.
 
-> [!IMPORTANT] Verás que, cuando ejecutas la función, obtienes un código de éxito que se muestra en la consola. Es posible que recibas un código 200 (éxito) en la consola y, al mismo tiempo, aparezca un código 400 (error) en el fichero de salida.
+> [!IMPORTANT]
+> Verás que, cuando ejecutas la función, obtienes un código de éxito que se muestra en la consola. Es posible que recibas un código 200 (éxito) en la consola y, al mismo tiempo, aparezca un código 400 (error) en el fichero de salida.
 > 
 > El primer código corresponde al **resultado de la ejecución de la función**. Si obtienes un código 200, significa que la función se ha ejecutado correctamente.
 > 
@@ -194,17 +203,22 @@ Las funciones que faltan son:
     5.  **Actualizar la nota** en la base de datos para que incluya un **campo adicional** denominado `translation` que guarde la traducción generada en el paso anterior.
     6.  **Devolver la URL prefirmada** para que el cliente pueda descargar el mp3
 
-> [!NOTE] Puedes consultar ejemplos de cómo realizar llamadas a la API de AWS desde JavaScript en la [documentación](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/javascript_code_examples.html). También puedes consultar la [referencia de la API de JavaScript](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/).
+> [!NOTE]
+> Puedes consultar ejemplos de cómo realizar llamadas a la API de AWS desde JavaScript en la [documentación](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/javascript_code_examples.html). También puedes consultar la [referencia de la API de JavaScript](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/).
 > 
 > Por supuesto, puedes utilizar cualquier otra herramienta que genere código, incluida la **IA**.
 
-> [!NOTE] En el diagrama de arquitectura inicial puedes ver qué **métodos** de API serán utilizados para cada acción.
+> [!NOTE]
+> En el diagrama de arquitectura inicial puedes ver qué **métodos** de API serán utilizados para cada acción.
 
-> [!NOTE] Recuerda que la función `processNote` necesitará permisos adicionales aparte del acceso a la tabla de DynamoDB.
+> [!NOTE]
+> Recuerda que la función `processNote` necesitará permisos adicionales aparte del acceso a la tabla de DynamoDB.
 
-> [!NOTE] En los archivos de código se ha marcado con `TODO` los puntos donde se debería añadir código.
+> [!NOTE]
+> En los archivos de código se ha marcado con `TODO` los puntos donde se debería añadir código.
 
-> [!IMPORTANT] Puedes utilizar el fichero `SKELETON.mjs` como base para crear las funciones. Recuerda también que deberás añadir nueva funcionalidad al fichero `auxFunctions.mjs`.
+> [!IMPORTANT]
+> Puedes utilizar el fichero `SKELETON.mjs` como base para crear las funciones. Recuerda también que deberás añadir nueva funcionalidad al fichero `auxFunctions.mjs`.
 
 
 
