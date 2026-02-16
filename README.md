@@ -224,6 +224,141 @@ Las funciones que faltan son:
 
 # Fase 2
 
+## Arquitectura de la fase 2
+
+![img](./imagenes/04-arq-fase2.jpg)
+
+> [!IMPORTANT]
+> Actualiza el repositorio, que ahora incluyen elementos de la fase 2, con un *git pull* (sobre el repositorio original, no sobre tu fork)
+
+## Creación de la API en AWS SAM
+
+En la plantilla de SAM declararemos una API de forma explícita (esto es opcional, pero queda más claro y funciona mejor en general para CORS) y para cada función Lambda que hemos creado deberemos habilitar un punto de entrada en esa API. Así quedaría la API en la sección de recursos, y la sección Events en la función getNotes: 
+
+```yaml
+Resources:
+  # API Gateway explícito para CORS
+  NotesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key'"
+        AllowOrigin: "'*'"
+
+  # Función Lambda para obtener las notas de un usuario
+  getNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getNotes.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para leer las notas de la tabla
+      Policies:
+        # Política de permisos para interactuar con la tabla de DynamoDB. Permisos CRUD.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          # Referencia al nombre de la tabla a través de una variable de entorno
+          APP_TABLE: !Ref AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi  
+            Path: /notes
+            Method: get
+```
+Añade también un Output para la dirección del API Gateway que genere (opcional, pero buena práctica).
+
+> [!NOTE]
+> En una integración http proxy se requiere además que cada una de las funciones Lambda, en cada respuesta que dé, [incluya los encabezados CORS](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-cors.html#apigateway-enable-cors-proxy). Tienes un ejemplo de ello en la función [getNotesCORS.mjs](proyecto/src/handlers/getNotesCORS.mjs) en el repositorio, así que antes de desplegar la plantilla de SAM, inclúyelo en todas tus funciones que has realizado en la fase 1 (sin cambiarles el nombre, es sólo incluir los encabezados CORS en todas las respuestas).
+
+Ahora ya puedes hacer el despliegue SAM actualizado y comprobar que todo ha ido bien.
+
+## Pruebas de funcionamiento básicas con la API recién creada mediante CURL
+
+Ahora prueba los puntos de entrada desde tu máquina local con peticiones CURL. Por ejemplo, para los tres primeros puntos de entrada sería así:
+
+```bash
+$API_URL=https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/Prod
+
+# 1. GET /notes (leer todas las notas)
+curl -X GET "$API_URL/notes"
+
+# 2. POST /notes (crear nota)
+curl -X POST "$API_URL/notes"  -H "Content-Type: application/json"  -d '{"noteId": "nota1", "text": "Nota ejemplo"}'
+
+# 3. GET /notes/{noteId} (leer nota)
+curl -X GET "$API_URL/notes/nota1"
+```
+
+> [!IMPORTANT]
+> Prueba todos los puntos de entrada y depura los posibles errores: la API deber funcionar correctamente antes de conectarla al front!
+
+## Creación de un cliente front-end en Vue.js
+
+En el repositorio tienes un cliente front-end ya programado en Vue.js que alojaremos en un bucket S3 con alojamiento web estático y cuya interfaz de usuario llamará a la API. En tu máquina local donde tienes clonado el repositorio, ve a la carpeta del cliente e instala las dependencias:
+
+```
+npm install
+```
+
+Como única configuración imprescindible, ve al archivo .env y pega ahí al URL completa de tu API en el parámetro *VITE_API_URL*
+
+Ahora ya puedes probar el cliente en local y testear su funcionamiento, creando, editando, procesando y eliminando notas, verás que con el siguiente comando salta una ventana a localhost:xxx:
+
+```
+npm run dev
+```
+
+![img](./imagenes/05_run_dev.jpg)
+
+Si todo está bien, ya podemos compilarlo, nos creará una carpeta "dist" para poder subirlo al S3:
+
+
+```
+npm run build
+```
+
+Ahora ya puedes crear el bucket S3 con el nombre "notas-" + tus iniciales (o similar), ponerle una política de acceso público y configurarlo como sitio web estático al index.html
+
+Una vez terminado, deberías tener un acceso a la aplicación de notas igual que [este de muestra](https://notas-jlg.alcmarenostrum.click/): haz pruebas similares a las del despliegue en local asegurándote de que todo funciona bien: añadir notas, editar, eliminar, procesar...
+
+
+## Interposición de CDN CloudFront como punto de acceso único para peticiones
+
+Una práctica estándar que hemos visto varias veces es utilizar cloudfront como punto de acceso único que divida las peticiones entre estáticas (y por lo tanto cacheables) y dinámicas (que tienen que ir al backend). Además nos servirá como elemento integrable con un dominio propio y un certificado para conexión segura.
+
+En primer lugar, y como ya hemos hecho en otras ocasiones, utilizaremos un subdominio personalizado sobre alcmarenostrum.click (por ejemplo "notas-"+iniciales), siguiendo el mismo procedimiento de la práctica intermodular anterior:
+
+-  En el servicio ACM solicita un certificado público con validación DNS (crear una entrada CNAME).
+-  Como no tenemos acceso al servicio Route 53 para registrar dominios desde la landing zone, usa las credenciales de cuenta completa del profesor en las que sí tenemos acceso (recuerda entrar con ventana InPrivate o de incógnito o bien otro navegador). En este acceso, en la zona hospedada “alcmarenostrum.click” añade la entrada CNAME que nos pide para validar.
+-  Pasados unos minutos, el servicio ACM de nuestra landing zone dará por buena la validación y el certificado estará emitido.
+
+Ahora ya podemos ir a implementar una distribución Cloudfront, de tipo gratuito. Recuerda que no puedes especificar el subdominio desde el comienzo, ya que no está en tu Route53 en tu cuenta, lo haremos más tarde.En esa distribución, tendremos dos orígenes aunque de momento sólo puedes poner en el asistente origen estático a bucket S3, usando todas las recomendaciones que te dé por defecto, incluyendo cambiar la política de acceso para que no sea público, opciones de caché, etc.
+
+Una vez creada la distribución, ya tenemos un hostname tipo xxxxxxxxxxxxxx.cloudfront.net . En las settings generales en la pantalla, añade el CNAME y el certificado que antes no hemos podido poner:
+
+![img](./imagenes/06_cloudfront.jpg)
+
+Vuelve al Route53 de la cuenta completa y añade una entrada CNAME para que resuelva "notas-"+ìniciales (o lo que hayas puesto en el subdominio) al hostname xxxxxxxxxxxxxx.cloudfront.net , así podremos usar un nombre DNS adecuado al que nos conectamos con nuestro certificado.
+
+Sólo nos quedan dos pasos a realizar dentro de la distribución de Cloudfront:
+
+- En la sección de orígenes, añadir el API Gateway como origen, con las opciones de caché deshabilitada que nos da por defecto (son peticiones que deben ir al backend, no cachearse)
+- En la sección de comportamientos, añadir un nuevo comportamiento con el path pattern "/Prod/*" para que vaya al API Gateway en ese caso.
+
+Ahora ya podemos ir a comprobar la aplicación de notas en la URL de la distribución https://notas-tusiniciales.alcmarenostrum.click (o lo que hayas puesto en el CNAME). Debería funcionar correctamente, pero si examinamos por ejemplo la petición /notes a la API... verás que sigue llamando al API Gateway directamente y no a la distribución de Cloudfront /Prod : 
+
+![img](./imagenes/07_api_no_actualizada.jpg)
+ 
+Eso debe especificarse de nuevo en el parámetro *VITE_API_URL* del archivo .env del proyecto de cliente en Vuejs. volver a compilarlo y subirlo de nuevo a S3, eliminando previamente todo lo anterior. Para evitar la caché de cloudfront, ejecuta en cloudfront una invalidación a /* y vuelve a hacer las pruebas: la petición ya debería ser a cloudfront /Prod
 
 
 # Fase 3
