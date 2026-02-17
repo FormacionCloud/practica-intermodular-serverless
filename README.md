@@ -26,7 +26,7 @@ Estructuraremos el desarrollo de la aplicación en **3 fases**:
     4.  Testeo del backend
 2.  **Fase 2**
     1.  Despliegue del **frontend** en S3
-    2.  Creación de un **CDN** (Cloudfront) para el frontend
+    2.  Creación de un **CDN** (CloudFront) para el frontend
     3.  Creación de la **API**, **conexión** con el backend y despliegue mediante **AWS SAM**
     4.  Testeo de la API
 3.  **Fase 3**
@@ -343,7 +343,7 @@ En primer lugar, y como ya hemos hecho en otras ocasiones, utilizaremos un subdo
 -  Como no tenemos acceso al servicio Route 53 para registrar dominios desde la landing zone, usa las credenciales de cuenta completa del profesor en las que sí tenemos acceso (recuerda entrar con ventana InPrivate o de incógnito o bien otro navegador). En este acceso, en la zona hospedada `alcmarenostrum.click` añade la entrada `CNAME` que nos pide para validar.
 -  Pasados unos minutos, el servicio ACM de nuestra landing zone dará por buena la validación y el certificado estará emitido.
 
-Ahora ya podemos ir a implementar una distribución Cloudfront, de tipo gratuito. Recuerda que no puedes especificar el subdominio desde el comienzo, ya que no está en tu Route53 en tu cuenta, lo haremos más tarde. En esa distribución, tendremos dos orígenes aunque de momento sólo puedes poner en el asistente origen estático a bucket S3, usando todas las recomendaciones que te dé por defecto, incluyendo cambiar la política de acceso para que no sea público, opciones de caché, etc.
+Ahora ya podemos ir a implementar una distribución CloudFront, de tipo gratuito. Recuerda que no puedes especificar el subdominio desde el comienzo, ya que no está en tu Route53 en tu cuenta, lo haremos más tarde. En esa distribución, tendremos dos orígenes aunque de momento sólo puedes poner en el asistente origen estático a bucket S3, usando todas las recomendaciones que te dé por defecto, incluyendo cambiar la política de acceso para que no sea público, opciones de caché, etc.
 
 Una vez creada la distribución, ya tenemos un hostname tipo `xxxxxxxxxxxxxx.cloudfront.net`. En las settings generales en la pantalla, añade el `CNAME` y el certificado que antes no hemos podido poner:
 
@@ -355,7 +355,7 @@ Sólo nos quedan dos pasos a realizar dentro de la distribución de CloudFront:
 - En la sección de orígenes, añadir el API Gateway como origen, con las opciones de caché deshabilitada que nos da por defecto (son peticiones que deben ir al backend, no cachearse)
 - En la sección de comportamientos, añadir un nuevo comportamiento con el path pattern `/Prod/*` para que vaya al API Gateway en ese caso.
 
-Ahora ya podemos ir a comprobar la aplicación de notas en la URL de la distribución https://notas-tusiniciales.alcmarenostrum.click (o lo que hayas puesto en el CNAME). Debería funcionar correctamente, pero si examinamos por ejemplo la petición `/notes` a la API, verás que sigue llamando al API Gateway directamente y no a la distribución de Cloudfront `/Prod`: 
+Ahora ya podemos ir a comprobar la aplicación de notas en la URL de la distribución https://notas-tusiniciales.alcmarenostrum.click (o lo que hayas puesto en el CNAME). Debería funcionar correctamente, pero si examinamos por ejemplo la petición `/notes` a la API, verás que sigue llamando al API Gateway directamente y no a la distribución de CloudFront `/Prod`: 
 
 ![img](./imagenes/07_api_no_actualizada.jpg)
  
