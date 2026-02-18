@@ -1,5 +1,5 @@
 {
   "path": "/notes",
   "httpMethod": "POST",
-  "body": "{\"noteId\": \"id1\",\"text\": \"Texto de ejemplo de la nota\"}"
+  "body": "{\"noteId\": \"id3\",\"text\": \"Texto de ejemplo de la nota\"}"
 }

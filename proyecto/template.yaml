@@ -45,6 +45,97 @@ Resources:
           # Referencia al nombre de la tabla a través de una variable de entorno
           APP_TABLE: !Ref AppTable
 
+  # Función Lambda para obtener una nota específica
+  getNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para obtener una nota específica
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para actualizar una nota
+  putNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/putNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para actualizar una nota
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para eliminar una nota
+  deleteNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/deleteNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para eliminar una nota
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para procesar una nota
+  processNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/processNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 256
+      Timeout: 30
+      Description: Función para procesar una nota (audio y traducción)
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - polly:SynthesizeSpeech
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - translate:TranslateText
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - comprehend:DetectDominantLanguage
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+              Resource: !Sub "arn:aws:s3:::${AppBucket}/*"
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+          APP_S3: !Ref AppBucket
+
   # TODO: Añadir las funciones que faltan a continuación
 
 
@@ -71,9 +162,25 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
+  # Bucket S3 para almacenar archivos de audio
+  AppBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-audio-bucket-${AWS::AccountId}"
+
 # Salidas para mostrar el nombre de las funciones que se han creado
 Outputs:
   getNotesFunctionName:
     Value: !Ref getNotes
   postNotesFunctionName:
     Value: !Ref postNotes
+  getNoteFunctionName:
+    Value: !Ref getNote
+  putNoteFunctionName:
+    Value: !Ref putNote
+  deleteNoteFunctionName:
+    Value: !Ref deleteNote
+  processNoteFunctionName:
+    Value: !Ref processNote
+  AppBucketName:
+    Value: !Ref AppBucket

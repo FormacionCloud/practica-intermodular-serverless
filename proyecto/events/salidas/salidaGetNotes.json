@@ -1,0 +1,1 @@
+{"statusCode":200,"body":"[{\"userId\":\"testuser\",\"text\":\"Texto de ejemplo de la nota\",\"translation\":\"Example text of the note\",\"noteId\":\"id2\"},{\"text\":\"Texto actualizado de la nota\",\"userId\":\"testuser\",\"noteId\":\"id3\"}]"}

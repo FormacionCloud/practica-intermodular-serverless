@@ -1,0 +1,7 @@
+•	¿Qué esquema de claves utilizarías? Indica qué información almacenarías en la clave primaria de la tabla
+Utilizaríamos una clave de partición (partition key) y una clave de ordenación (sort key).
+Clave de partición: userId (tipo String).
+Clave de ordenación: noteId (tipo String).
+•	¿Utilizarías únicamente una clave de partición, o ves conveniente utilizar también una clave de ordenación? ¿Por qué?
+Sí, es conveniente utilizar tanto la clave de partición como la clave de ordenación 
+Porque nos permite organizar los datos de manera eficiente. La clave de partición (userId) nos ayuda a distribuir los datos entre diferentes nodos, mientras que la clave de ordenación (noteId) nos permite ordenar las notas dentro de cada partición, facilitando consultas específicas y mejorando el rendimiento.
