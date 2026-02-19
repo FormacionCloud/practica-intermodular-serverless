@@ -355,6 +355,9 @@ Sólo nos quedan dos pasos a realizar dentro de la distribución de CloudFront:
 - En la sección de orígenes, añadir el API Gateway como origen, con las opciones de caché deshabilitada que nos da por defecto (son peticiones que deben ir al backend, no cachearse)
 - En la sección de comportamientos, añadir un nuevo comportamiento con el path pattern `/Prod/*` para que vaya al API Gateway en ese caso.
 
+> [!IMPORTANT]
+> Acuérdate de permitir, en este último comportamiento del API Gateway en Cloudfront, peticiones  GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE en la opción "Allowed HTTP methods".
+
 Ahora ya podemos ir a comprobar la aplicación de notas en la URL de la distribución https://notas-tusiniciales.alcmarenostrum.click (o lo que hayas puesto en el CNAME). Debería funcionar correctamente, pero si examinamos por ejemplo la petición `/notes` a la API, verás que sigue llamando al API Gateway directamente y no a la distribución de CloudFront `/Prod`: 
 
 ![img](./imagenes/07_api_no_actualizada.jpg)
