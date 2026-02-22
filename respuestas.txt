@@ -1,0 +1,1 @@
+en la clave primaria se guardaria el id de la nota y despues se utilizaria una clave de ordenacion que seria el id del usuario
