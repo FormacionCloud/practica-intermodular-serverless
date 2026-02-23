@@ -1,18 +1,20 @@
 <template>
   <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-all border border-gray-100 hover:border-indigo-200">
     <!-- Título -->
-    <h3 class="text-xl font-bold text-gray-900 mb-2 truncate">{{ note.noteId || 'Sin ID' }}</h3>
+    <h3 class="text-xl font-bold text-gray-900 mb-2 truncate">{{ note.title || note.noteId || 'Sin título' }}</h3>
+    <!-- ID como referencia -->
+    <p class="text-xs text-gray-500 mb-2">ID: {{ note.noteId }}</p>
     
-    <!-- Texto nota -->
-    <p class="text-gray-700 mb-4 line-clamp-3 leading-relaxed">{{ note.text }}</p>
+    <!-- Contenido -->
+    <p class="text-gray-700 mb-4 line-clamp-3 leading-relaxed">{{ note.content }}</p>
     
-    <!-- Traducción (post-proceso) -->
+    <!-- Traducción -->
     <div v-if="note.translation" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
       <strong class="text-sm text-green-800 block mb-1">Traducción:</strong>
       <span class="text-green-900 text-sm">{{ note.translation }}</span>
     </div>
     
-    <!-- Audio MP3 (post-proceso Polly/S3) -->
+    <!-- Audio MP3 -->
     <AudioPlayer v-if="note.audioUrl" :url="note.audioUrl" />
     
     <!-- Botones acciones -->
@@ -36,9 +38,9 @@
       <button
         @click="$emit('process', note.noteId)"
         class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-        :disabled="isProcessing || note.s3Url"
+        :disabled="isProcessing || note.audioUrl"
       >
-        {{ isProcessing ? 'Procesando...' : (note.s3Url ? '✅ Listo' : 'Procesar') }}
+        {{ isProcessing ? 'Procesando...' : (note.audioUrl ? '✅ Listo' : 'Procesar') }}
       </button>
     </div>
     

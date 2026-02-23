@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <!-- Editor/Modal (se abre con nueva/editar) -->
+    <!-- Editor/Modal -->
     <NoteEditor 
       v-if="notesStore.editingNote"
       :note="notesStore.editingNote"
@@ -50,10 +50,9 @@ import NoteEditor from './NoteEditor.vue';
 
 const notesStore = useNotesStore();
 
-const emit = defineEmits(['edit', 'delete', 'process']);
-
+// Función para nueva nota: objeto con title y content (sin text)
 const startNewNote = () => {
-  notesStore.startEdit({ text: '', title: '' }); // Plantilla nueva
+  notesStore.startEdit({ title: '', content: '' });
 };
 
 const handleDelete = async (noteId) => {
@@ -72,10 +71,8 @@ const startEdit = (note) => {
 
 const handleSave = async (noteData) => {
   if (notesStore.editingNote.noteId) {
-    // Actualizar existente
     await notesStore.updateCurrentNote(notesStore.editingNote.noteId, noteData);
   } else {
-    // Nueva nota
     await notesStore.addNote(noteData);
   }
   notesStore.cancelEdit();
