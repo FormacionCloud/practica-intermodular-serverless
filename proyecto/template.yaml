@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Práctica intermodular serverless
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Resources:
+
+  # Tabla DynamoDB
+  AppTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: noteId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: noteId
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  # Bucket S3 para almacenar audios
+  AppBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-notes-bucket"
+
+  # Función Lambda para obtener todas las notas de un usuario
+  getNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getNotes.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para leer las notas de la tabla
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para crear una nota
+  postNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/postNotes.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para crear una nota en la tabla
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para obtener una nota específica
+  getNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para leer una nota de la tabla
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para eliminar una nota
+  deleteNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/deleteNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para eliminar una nota de la tabla
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para crear o actualizar una nota
+  putNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/putNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para crear o actualizar notas en la tabla
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+
+  # Función Lambda para procesar notas, generar audio y traducciones
+  processNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/processNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 256
+      Timeout: 10
+      Description: Función para procesar notas, generar audio y traducciones
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+        - S3CrudPolicy:
+            BucketName: !Ref AppBucket
+        - Statement:
+            Effect: Allow
+            Action:
+              - translate:TranslateText
+              - polly:SynthesizeSpeech
+            Resource: "*"
+      Environment:
+        Variables:
+          APP_TABLE: !Ref AppTable
+          APP_BUCKET: !Ref AppBucket
+
+# Salidas
+Outputs:
+  getNotesFunctionName:
+    Value: !Ref getNotes
+  postNotesFunctionName:
+    Value: !Ref postNotes
+  getNoteFunctionName:
+    Value: !Ref getNote
+  deleteNoteFunctionName:
+    Value: !Ref deleteNote
+  putNoteFunctionName:
+    Value: !Ref putNote
+  processNoteFunctionName:
+    Value: !Ref processNote
+  AppTableName:
+    Value: !Ref AppTable
+  AppBucketName:
+    Value: !Ref AppBucket
