@@ -181,17 +181,27 @@ async function processNote(userId, noteId) {
   // Actualizar la nota en DynamoDB con la traducción
   const updateParams = {
     TableName: tableName,
-    Item: {
+    Key: {
       userId: userId,
       noteId: noteId,
-      text: text,
-      translation: translation,
     },
+    UpdateExpression: "SET #translation = :translation",
+    ExpressionAttributeNames: {
+      "#translation": "translation",
+    },
+    ExpressionAttributeValues: {
+      ":translation": translation,
+    },
+    ReturnValues: "ALL_NEW",
   };
-  await ddbDocClient.send(new PutCommand(updateParams));
+  await ddbDocClient.send(new UpdateCommand(updateParams));
 
-  // Devolver la URL prefirmada
-  return signedUrl;
+  return {
+    audioUrl: signedUrl,
+    translation: translation,
+    noteId: noteId,
+    userId: userId,
+  };
 }
 
 // TODO: Exportar las funciones creadas

@@ -1,0 +1,44 @@
+
+$API_URL="https://5h7g42kn8h.execute-api.us-east-1.amazonaws.com/Prod"
+
+# PRUEBA 1: GET /notes (Leer todas las notas)
+Invoke-WebRequest -Uri "$API_URL/notes" -Method GET -ContentType "application/json"
+
+# PRUEBA 2: POST /notes (Crear primera nota)
+$body1 = '{"noteId": "nota1", "text": "Esta es mi primera nota de ejemplo"}'
+Invoke-WebRequest -Uri "$API_URL/notes" -Method POST -ContentType "application/json" -Body $body1
+
+# PRUEBA 3: POST /notes (Crear segunda nota)
+$body2 = '{"noteId": "nota2", "text": "Esta es mi segunda nota para testing"}'
+Invoke-WebRequest -Uri "$API_URL/notes" -Method POST -ContentType "application/json" -Body $body2
+
+# PRUEBA 4: GET /notes (Verificar que se crearon)
+Invoke-WebRequest -Uri "$API_URL/notes" -Method GET -ContentType "application/json"
+
+# PRUEBA 5: GET /notes/{noteId} (Leer nota específica)
+Invoke-WebRequest -Uri "$API_URL/notes/nota1" -Method GET -ContentType "application/json"
+
+# PRUEBA 6: PUT /notes/{noteId} (Actualizar nota)
+$bodyUpdate = '{"text": "Esta es mi primera nota ACTUALIZADA"}'
+Invoke-WebRequest -Uri "$API_URL/notes/nota1" -Method PUT -ContentType "application/json" -Body $bodyUpdate
+
+# PRUEBA 7: GET /notes/{noteId} (Verificar actualización)
+Invoke-WebRequest -Uri "$API_URL/notes/nota1" -Method GET -ContentType "application/json"
+
+# PRUEBA 8: POST /notes/{noteId}/process (Procesar nota)
+Invoke-WebRequest -Uri "$API_URL/notes/nota1/process" -Method POST -ContentType "application/json"
+
+# PRUEBA 9: GET /notes/{noteId} (Verificar procesamiento)
+Invoke-WebRequest -Uri "$API_URL/notes/nota1" -Method GET -ContentType "application/json"
+
+# PRUEBA 10: DELETE /notes/{noteId} (Eliminar nota)
+Invoke-WebRequest -Uri "$API_URL/notes/nota1" -Method DELETE -ContentType "application/json"
+
+# PRUEBA 11: GET /notes (Verificar eliminación)
+Invoke-WebRequest -Uri "$API_URL/notes" -Method GET -ContentType "application/json"
+
+# PRUEBA 12: GET /notes/{noteId} (Nota inexistente)
+Invoke-WebRequest -Uri "$API_URL/notes/nota-inexistente" -Method GET -ContentType "application/json"
+
+# PRUEBA 13: DELETE /notes/{noteId} (Nota inexistente)
+Invoke-WebRequest -Uri "$API_URL/notes/nota-inexistente" -Method DELETE -ContentType "application/json"

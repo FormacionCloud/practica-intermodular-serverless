@@ -6,6 +6,13 @@ import * as libreria from "../auxFunctions.mjs";
 // Por ello, el evento tendrá el formato descrito en la documentación:
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
+// Headers CORS
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
+
 // Handler
 export const handler = async (event) => {
     if (event.httpMethod !== "PUT") {
@@ -39,18 +46,26 @@ export const handler = async (event) => {
 
     // Obtener el noteId del path y el texto del body
     const noteId = event.pathParameters.id;
-    const noteData = JSON.parse(event.body);
-    const noteText = noteData.text;
+    const noteData = JSON.parse(event.body || "{}");
+    const noteText = noteData.text ?? noteData.attributes?.text;
 
     var response;
 
     try {
         // Llamar a la función de la librería para actualizar la nota
-        await libreria.putNoteForUser(userId, noteId, noteText);
+        const updatedNote = await libreria.putNoteForUser(
+            userId,
+            noteId,
+            noteText,
+        );
 
         response = {
             statusCode: 200,
-            body: JSON.stringify({ message: "Nota actualizada correctamente" }),
+            headers: corsHeaders,
+            body: JSON.stringify({
+                message: "Nota actualizada correctamente",
+                note: updatedNote,
+            }),
         };
     } catch (err) {
         console.log("Error", err);
@@ -58,6 +73,7 @@ export const handler = async (event) => {
         var errorMessage = { message: "Ha habido un problema al actualizar la nota" };
         response = {
             statusCode: 400,
+            headers: corsHeaders,
             body: JSON.stringify(errorMessage),
         };
     }

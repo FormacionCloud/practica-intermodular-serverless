@@ -36,9 +36,9 @@
       <button
         @click="$emit('process', note.noteId)"
         class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-        :disabled="isProcessing || note.s3Url"
+        :disabled="isProcessing || note.audioUrl"
       >
-        {{ isProcessing ? 'Procesando...' : (note.s3Url ? '✅ Listo' : 'Procesar') }}
+        {{ isProcessing ? 'Procesando...' : (note.audioUrl ? '✅ Listo' : 'Procesar') }}
       </button>
     </div>
     

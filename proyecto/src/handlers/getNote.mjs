@@ -6,6 +6,13 @@ import * as libreria from "../auxFunctions.mjs";
 // Por ello, el evento tendrá el formato descrito en la documentación:
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
+// Headers CORS
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
+
 // Handler
 export const handler = async (event) => {
     if (event.httpMethod !== "GET") {
@@ -49,11 +56,13 @@ export const handler = async (event) => {
         if (!note) {
             response = {
                 statusCode: 404,
+                headers: corsHeaders,
                 body: JSON.stringify({ message: "Nota no encontrada" }),
             };
         } else {
             response = {
                 statusCode: 200,
+                headers: corsHeaders,
                 body: JSON.stringify(note),
             };
         }
@@ -63,6 +72,7 @@ export const handler = async (event) => {
         var errorMessage = { message: "Ha habido un problema al obtener la nota" };
         response = {
             statusCode: 400,
+            headers: corsHeaders,
             body: JSON.stringify(errorMessage),
         };
     }

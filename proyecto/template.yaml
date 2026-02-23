@@ -5,6 +5,16 @@ Transform:
 - AWS::Serverless-2016-10-31
 
 Resources:
+  # API Gateway explícito para CORS
+  NotesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key'"
+        AllowOrigin: "'*'"
+
   # Función Lambda para obtener las notas de un usuario
   getNotes:
     Type: AWS::Serverless::Function
@@ -24,6 +34,13 @@ Resources:
         Variables:
           # Referencia al nombre de la tabla a través de una variable de entorno
           APP_TABLE: !Ref AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes
+            Method: get
 
   # Función Lambda para crear una nota para un usuario
   postNotes:
@@ -44,6 +61,13 @@ Resources:
         Variables:
           # Referencia al nombre de la tabla a través de una variable de entorno
           APP_TABLE: !Ref AppTable
+      Events:
+        PostNotesApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes
+            Method: post
 
   # Función Lambda para obtener una nota específica
   getNote:
@@ -62,6 +86,13 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        GetNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{id}
+            Method: get
 
   # Función Lambda para actualizar una nota
   putNote:
@@ -80,6 +111,13 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        PutNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{id}
+            Method: put
 
   # Función Lambda para eliminar una nota
   deleteNote:
@@ -98,6 +136,13 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        DeleteNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{id}
+            Method: delete
 
   # Función Lambda para procesar una nota
   processNote:
@@ -135,10 +180,15 @@ Resources:
         Variables:
           APP_TABLE: !Ref AppTable
           APP_S3: !Ref AppBucket
+      Events:
+        ProcessNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{id}/process
+            Method: post
 
   # TODO: Añadir las funciones que faltan a continuación
-
-
 
 
   # Tabla DynamoDB
@@ -151,9 +201,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: userId # Si lo deseas, puedes cambiar el nombre de las claves. Recuerda actualizar el código también
+        - AttributeName: userId 
           AttributeType: S
-        - AttributeName: noteId # Si lo deseas, puedes cambiar el nombre de las claves. Recuerda actualizar el código también
+        - AttributeName: noteId
           AttributeType: S
       KeySchema:
         - AttributeName: userId
@@ -167,6 +217,33 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${AWS::StackName}-audio-bucket-${AWS::AccountId}"
+
+  # Bucket S3 para el frontend (sitio web estático)
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-frontend-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+
+  # Política de bucket para acceso público al frontend
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${FrontendBucket}/*"
 
 # Salidas para mostrar el nombre de las funciones que se han creado
 Outputs:
@@ -184,3 +261,11 @@ Outputs:
     Value: !Ref processNote
   AppBucketName:
     Value: !Ref AppBucket
+  FrontendBucketName:
+    Value: !Ref FrontendBucket
+  FrontendBucketURL:
+    Value: !Sub "http://${FrontendBucket}.s3-website-${AWS::Region}.amazonaws.com"
+    Description: URL del bucket S3 del frontend
+  ApiUrl:
+    Description: URL del API Gateway
+    Value: !Sub "https://${NotesApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"

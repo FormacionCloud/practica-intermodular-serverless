@@ -6,6 +6,13 @@ import * as libreria from "../auxFunctions.mjs";
 // Por ello, el evento tendrá el formato descrito en la documentación:
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
+// Headers CORS
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
+
 // Handler
 export const handler = async (event) => {
     if (event.httpMethod !== "POST") {
@@ -44,11 +51,12 @@ export const handler = async (event) => {
 
     try {
         // Llamar a la función de la librería para procesar la nota
-        const signedUrl = await libreria.processNote(userId, noteId);
+        const processed = await libreria.processNote(userId, noteId);
 
         response = {
             statusCode: 200,
-            body: JSON.stringify({ audioUrl: signedUrl }),
+            headers: corsHeaders,
+            body: JSON.stringify(processed),
         };
     } catch (err) {
         console.log("Error", err);
@@ -56,6 +64,7 @@ export const handler = async (event) => {
         var errorMessage = { message: "Ha habido un problema al procesar la nota" };
         response = {
             statusCode: 400,
+            headers: corsHeaders,
             body: JSON.stringify(errorMessage),
         };
     }

@@ -26,11 +26,10 @@ export const getNote = async (noteId) => {
 
 // PUT /notes/{noteId} - body: {attributes: {text}}
 export const updateNote = async (noteId, noteData) => {
-  return api.put(`/notes/${encodeURIComponent(noteId)}`, {
-    attributes: {
-      text: noteData.text 
-    }
+  const response = await api.put(`/notes/${encodeURIComponent(noteId)}`, {
+    text: noteData.text
   });
+  return response.data?.note || null;
 };
 
 // DELETE /notes/{noteId}
