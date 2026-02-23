@@ -6,6 +6,16 @@ Transform:
 
 Resources:
 
+  # API Gateway explícito para CORS
+  NotesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key'"
+        AllowOrigin: "'*'"
+
   # Tabla DynamoDB
   AppTable:
     Type: AWS::DynamoDB::Table
@@ -28,7 +38,7 @@ Resources:
     Properties:
       BucketName: !Sub "${AWS::StackName}-notes-bucket"
 
-  # Función Lambda para obtener todas las notas de un usuario
+  # Función Lambda para obtener todas las notas
   getNotes:
     Type: AWS::Serverless::Function
     Properties:
@@ -45,6 +55,13 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes
+            Method: get
 
   # Función Lambda para crear una nota
   postNotes:
@@ -63,6 +80,13 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        PostNotesApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes
+            Method: post
 
   # Función Lambda para obtener una nota específica
   getNote:
@@ -81,6 +105,13 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        GetNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{noteId}
+            Method: get
 
   # Función Lambda para eliminar una nota
   deleteNote:
@@ -99,6 +130,13 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        DeleteNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{noteId}
+            Method: delete
 
   # Función Lambda para crear o actualizar una nota
   putNote:
@@ -117,8 +155,15 @@ Resources:
       Environment:
         Variables:
           APP_TABLE: !Ref AppTable
+      Events:
+        PutNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{noteId}
+            Method: put
 
-  # Función Lambda para procesar notas, generar audio y traducciones
+  # Función Lambda para procesar notas (audio + traducción)
   processNote:
     Type: AWS::Serverless::Function
     Properties:
@@ -144,8 +189,15 @@ Resources:
         Variables:
           APP_TABLE: !Ref AppTable
           APP_BUCKET: !Ref AppBucket
+      Events:
+        ProcessNoteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NotesApi
+            Path: /notes/{noteId}/process
+            Method: post
 
-# Salidas
+# Outputs
 Outputs:
   getNotesFunctionName:
     Value: !Ref getNotes
@@ -163,3 +215,6 @@ Outputs:
     Value: !Ref AppTable
   AppBucketName:
     Value: !Ref AppBucket
+  NotesApiUrl:
+    Value: !Sub "https://${NotesApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    Description: URL del API Gateway

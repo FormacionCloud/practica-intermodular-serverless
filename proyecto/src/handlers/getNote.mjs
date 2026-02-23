@@ -1,10 +1,20 @@
 // Librería de funciones auxiliares
 import * as libreria from "../auxFunctions.mjs";
 
+// Encabezados CORS
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key"
+};
+
 // Handler
 export const handler = async (event) => {
   if (event.httpMethod !== "GET") {
-    throw new Error(`Esta función solo admite peticiones de tipo GET. Has usado: ${event.httpMethod}`);
+    return {
+      statusCode: 405, // Método no permitido
+      headers: corsHeaders,
+      body: JSON.stringify({ message: `Esta función solo admite peticiones de tipo GET. Has usado: ${event.httpMethod}` })
+    };
   }
 
   console.info("Petición recibida:", event);
@@ -40,11 +50,16 @@ export const handler = async (event) => {
 
     response = {
       statusCode: note ? 200 : 404,
+      headers: corsHeaders, // <--- AÑADIDO
       body: JSON.stringify(note || { message: "Nota no encontrada" }),
     };
   } catch (err) {
     console.error("Error:", err);
-    response = { statusCode: 400, body: JSON.stringify({ message: "Ha habido un problema" }) };
+    response = {
+      statusCode: 400,
+      headers: corsHeaders, // <--- AÑADIDO
+      body: JSON.stringify({ message: "Ha habido un problema" }),
+    };
   }
 
   console.info(

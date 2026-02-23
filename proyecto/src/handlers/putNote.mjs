@@ -1,14 +1,25 @@
 // Librería de funciones auxiliares
 import * as libreria from "../auxFunctions.mjs";
 
+// Encabezados CORS
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key"
+};
+
 // Handler
 export const handler = async (event) => {
   if (event.httpMethod !== "PUT") {
-    throw new Error(`Esta función solo admite peticiones de tipo PUT. Has usado: ${event.httpMethod}`);
+    return {
+      statusCode: 405,
+      headers: corsHeaders,
+      body: JSON.stringify({ message: `Esta función solo admite peticiones de tipo PUT. Has usado: ${event.httpMethod}` })
+    };
   }
 
   console.info("Petición recibida:", event);
 
+  // Usuario autenticado
   var userId, email, username;
   try {
     const userClaims = event.requestContext.authorizer.claims;
@@ -35,10 +46,18 @@ export const handler = async (event) => {
       note = await libreria.postNoteForUser(userId, noteId, title, content, ts);
     }
 
-    response = { statusCode: 200, body: JSON.stringify(note) };
+    response = {
+      statusCode: 200,
+      headers: corsHeaders, // <--- AÑADIDO
+      body: JSON.stringify(note)
+    };
   } catch (err) {
     console.error("Error:", err);
-    response = { statusCode: 400, body: JSON.stringify({ message: "Ha habido un problema" }) };
+    response = {
+      statusCode: 400,
+      headers: corsHeaders, // <--- AÑADIDO
+      body: JSON.stringify({ message: "Ha habido un problema" })
+    };
   }
 
   console.info(
