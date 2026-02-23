@@ -1,0 +1,20 @@
+Se eliminan parte del nombre de las lambdas devido a que el repositorio es público
+
+############## GET NOTES ##############
+aws lambda invoke --function-name carlos-ramos-intermodular-sam-getNotes --payload fileb://events/event-get-notes.json events/salidas/salida_get_note.json
+
+############## POST NOTE ##############
+aws lambda invoke --function-name carlos-ramos-intermodular-sam-postNotes --payload fileb://events/event-post-notes.json events/salidas/salida_post_note.json
+
+############## GET NOTE (by_id) ##############
+aws lambda invoke --function-name carlos-ramos-intermodular-sam-getNote --payload fileb://events/event-get-note-by_id.json events/salidas/salida_get_note_by_id.json
+
+############## PUT NOTE ##############
+aws lambda invoke --function-name carlos-ramos-intermodular-sam-putNotes --payload fileb://events/event-put-notes.json events/salidas/salida_put_notes.json
+
+############## DELETE NOTE ##############
+aws lambda invoke --function-name carlos-ramos-intermodular-sam-deleteNotes --payload fileb://events/event-delete-note.json events/salidas/salida_delete_note.json 
+
+############## PROCESS NOTE ##############
+aws lambda invoke --function-name carlos-ramos-intermodular-sam-processNote --payload fileb://events/event-process-note.json events/salidas/salida_process_note.json
+

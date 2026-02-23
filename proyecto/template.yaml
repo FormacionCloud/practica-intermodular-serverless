@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  Práctica intermodular serverless
+  Practica intermodular serverless - Carrammir
 Transform:
 - AWS::Serverless-2016-10-31
 
@@ -47,8 +47,90 @@ Resources:
 
   # TODO: Añadir las funciones que faltan a continuación
 
+  # Get Note By Id lambdaFunction
+  getNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para leer una nota en la tabla por id
+      Policies:
+        # Política de permisos para interactuar con la tabla de DynamoDB. Permisos CRUD.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          # Referencia al nombre de la tabla a través de una variable de entorno
+          APP_TABLE: !Ref AppTable
 
+  # Put notes lambda function
+  putNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/putNotes.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para actualizar una nota en la tabla
+      Policies:
+        # Política de permisos para interactuar con la tabla de DynamoDB. Permisos CRUD.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          # Referencia al nombre de la tabla a través de una variable de entorno
+          APP_TABLE: !Ref AppTable
 
+# Delete notes lambda function
+  deleteNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/deleteNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para eliminar una nota en la tabla
+      Policies:
+        # Política de permisos para interactuar con la tabla de DynamoDB. Permisos CRUD.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+      Environment:
+        Variables:
+          # Referencia al nombre de la tabla a través de una variable de entorno
+          APP_TABLE: !Ref AppTable
+  
+  processNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/processNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: Función para eliminar una nota en la tabla
+      Policies:
+        # Política de permisos para interactuar con la tabla de DynamoDB. Permisos CRUD.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AppTable
+        - S3FullAccessPolicy:
+            BucketName: !Ref IntermodularCRMbucket
+        # Políticas de acceso a Translate y Polly
+        - TranslateFullAccess
+        - AmazonPollyFullAccess
+      Environment:
+        Variables:
+          # Referencia al nombre de la tabla a través de una variable de entorno
+          APP_TABLE: !Ref AppTable
+          APP_S3: !Ref IntermodularCRMbucket
 
   # Tabla DynamoDB
   # Observa que no vamos a utilizar el recurso AWS::Serverless::SimpleTable, porque
@@ -60,9 +142,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: userId # Si lo deseas, puedes cambiar el nombre de las claves. Recuerda actualizar el código también
+        - AttributeName: userId 
           AttributeType: S
-        - AttributeName: noteId # Si lo deseas, puedes cambiar el nombre de las claves. Recuerda actualizar el código también
+        - AttributeName: noteId 
           AttributeType: S
       KeySchema:
         - AttributeName: userId
@@ -71,9 +153,28 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
+  IntermodularCRMbucket:
+    Type: AWS::S3::Bucket
+
 # Salidas para mostrar el nombre de las funciones que se han creado
 Outputs:
   getNotesFunctionName:
     Value: !Ref getNotes
+
   postNotesFunctionName:
     Value: !Ref postNotes
+
+  getNoteFunctionName:
+    Value: !Ref getNote
+
+  putNotesFunctionName:
+    Value: !Ref putNotes
+
+  deleteNotesFunctionName:
+    Value: !Ref deleteNotes
+
+  processNotesFunctionName:
+    Value: !Ref processNote
+
+  IntermodularCRMbucket:
+    Value: !Ref IntermodularCRMbucket

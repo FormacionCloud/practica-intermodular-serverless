@@ -1,0 +1,5 @@
+{
+  "path": "/notes",
+  "httpMethod": "PUT",
+  "body": "{\"noteId\": \"id1\",\"text\": \"Segundo texto de ejemplo de la nota\"}"
+}
