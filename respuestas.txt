@@ -1,0 +1,9 @@
+Pues lo que haria es seguir este esquema :
+
+PK = USER#<userId>
+SK = NOTE#<noteId>
+
+Pero la mejor praxis es ordenar por fecha de creacion de X nota,por lo tanto quedaria tal que asi:(por ahora me quedo con la anterior.)
+
+PK = USER#<userId>
+SK = CREATED#<timestamp>#NOTE#<noteId>
