@@ -20,7 +20,7 @@ export const createNote = async ({ noteId, text }) => {
 
 // GET /notes/{noteId}
 export const getNote = async (noteId) => {
-  const { data } = await api.get(`/notes/${noteId}`);
+  const { data } = await api.get(`/notes/${encodeURIComponent(noteId)}`);
   return data || null;
 };
 
@@ -34,13 +34,15 @@ export const updateNote = async (noteId, noteData) => {
 
 // DELETE /notes/{noteId}
 export const deleteNote = async (noteId) => {
-  await api.delete(`/notes/${noteId}`);
+  await api.delete(`/notes/${encodeURIComponent(noteId)}`);
   return noteId;  // ← Confirma delete
 };
 
 // POST /notes/{noteId}/process
 export const processNote = async (noteId) => {
-  const { data } = await api.post(`/notes/${noteId}/process`);
+  const { data } = await api.post(
+    `/notes/${encodeURIComponent(noteId)}/process`,
+  );
   return data || { noteId, processing: 'completed' };
 };
 

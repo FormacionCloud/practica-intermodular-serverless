@@ -44,8 +44,9 @@ export const handler = async (event) => {
         username = "testuser";
     }
 
-    // Obtener el noteId del path
-    const noteId = event.pathParameters.id;
+    // Obtener el noteId del path (decodificar si viene URL-encoded)
+    const rawNoteId = event.pathParameters?.id;
+    const noteId = rawNoteId ? decodeURIComponent(rawNoteId) : rawNoteId;
 
     var response;
 

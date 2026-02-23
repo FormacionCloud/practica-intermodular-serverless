@@ -78,14 +78,15 @@ export const useNotesStore = defineStore('notes', () => {
     try {
       processingNoteId.value = noteId;
       const processed = await processNote(noteId);
-      await fetchNotes();
       const index = notes.value.findIndex(n => n.noteId === noteId);
-      if (index !== -1 && processed?.audioUrl) {
+      if (index !== -1) {
         notes.value[index] = {
           ...notes.value[index],
           audioUrl: processed.audioUrl,
           translation: processed.translation ?? notes.value[index].translation
         };
+      } else {
+        await fetchNotes();
       }
       return processed;
     } catch (err) {

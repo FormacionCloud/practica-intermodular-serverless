@@ -45,7 +45,8 @@ export const handler = async (event) => {
     }
 
     // Obtener el noteId del path y el texto del body
-    const noteId = event.pathParameters.id;
+    const rawNoteId = event.pathParameters?.id;
+    const noteId = rawNoteId ? decodeURIComponent(rawNoteId) : rawNoteId;
     const noteData = JSON.parse(event.body || "{}");
     const noteText = noteData.text ?? noteData.attributes?.text;
 
