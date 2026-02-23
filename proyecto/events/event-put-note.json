@@ -1,0 +1,8 @@
+{
+    "path": "/notes/id3",
+    "httpMethod": "PUT",
+    "pathParameters": {
+        "id": "id3"
+    },
+    "body": "{\"text\": \"Texto actualizado de la nota\"}"
+}

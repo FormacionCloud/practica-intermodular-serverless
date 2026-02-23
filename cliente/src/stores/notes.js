@@ -25,43 +25,43 @@ export const useNotesStore = defineStore('notes', () => {
   };
 
   // POST /notes
-	  const addNote = async (noteData) => {
-		try {
-		  loading.value = true;
-		  
-		  await createNote(noteData);
-		  
-		  await fetchNotes();
-		  
-		  return true;
-		} catch (err) {
-		  error.value = 'Error creando nota';
-		  console.error(err);
-		  throw err;
-		} finally {
-		  loading.value = false;
-		}
-	  };
+  const addNote = async (noteData) => {
+    try {
+      loading.value = true;
 
-	
+      await createNote(noteData);
+
+      await fetchNotes();
+
+      return true;
+    } catch (err) {
+      error.value = 'Error creando nota';
+      console.error(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+
   // PUT /notes/{id}
-	const updateCurrentNote = async (noteId, noteData) => {
-	  try {
-		loading.value = true;
-		
-		await updateNote(noteId, noteData);
-		
-		await fetchNotes();  // recarga
-		
-		editingNote.value = null;
-		return noteData;
-	  } catch (err) {
-		error.value = 'Error actualizando nota';
-		throw err;
-	  } finally {
-		loading.value = false;
-	  }
-	};
+  const updateCurrentNote = async (noteId, noteData) => {
+    try {
+      loading.value = true;
+
+      const updated = await updateNote(noteId, noteData);
+
+      await fetchNotes();
+
+      editingNote.value = null;
+      return updated || noteData;
+    } catch (err) {
+      error.value = 'Error actualizando nota';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
   // DELETE /notes/{id}
   const removeNote = async (noteId) => {
     try {
@@ -79,7 +79,15 @@ export const useNotesStore = defineStore('notes', () => {
       processingNoteId.value = noteId;
       const processed = await processNote(noteId);
       const index = notes.value.findIndex(n => n.noteId === noteId);
-      if (index !== -1) notes.value[index] = processed;
+      if (index !== -1) {
+        notes.value[index] = {
+          ...notes.value[index],
+          audioUrl: processed.audioUrl,
+          translation: processed.translation ?? notes.value[index].translation
+        };
+      } else {
+        await fetchNotes();
+      }
       return processed;
     } catch (err) {
       error.value = 'Error procesando (Translate/Polly/S3)';

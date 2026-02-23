@@ -4,11 +4,14 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   PutCommand,
+  GetCommand,
+  DeleteCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-// TODO: importar librerías adicionales (Translate)
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate";
 
 // Clientes para interactuar con la API de DynamoDB
 const client = new DynamoDBClient({});
@@ -50,6 +53,29 @@ async function postNoteForUser(userId, noteId, noteText) {
   return data;
 }
 
+// Función para actualizar una nota para un usuario
+async function putNoteForUser(userId, noteId, noteText) {
+  // Usar UpdateCommand para actualizar solo el campo text, manteniendo otros campos
+  var params = {
+    TableName: tableName,
+    Key: {
+      userId: userId,
+      noteId: noteId,
+    },
+    UpdateExpression: "SET #text = :text",
+    ExpressionAttributeNames: {
+      "#text": "text",
+    },
+    ExpressionAttributeValues: {
+      ":text": noteText,
+    },
+    ReturnValues: "ALL_NEW",
+  };
+
+  const data = await ddbDocClient.send(new UpdateCommand(params));
+  return data.Attributes;
+}
+
 // Función que recibe un texto de una nota y devuelve un buffer con los datos sintetizados por Polly
 async function textToSpeech(text) {
   const pollyClient = new PollyClient();
@@ -86,12 +112,97 @@ async function uploadToS3(mp3Data, key) {
 
   await s3Client.send(command);
 
-  // TODO: modificar para devolver una URL prefirmada de S3 que permita descargar
-  // el audio durante un tiempo limitado de 5 minutos
-  return;
+  // Generar URL prefirmada para descargar el audio durante 5 minutos (300 segundos)
+  const getCommand = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
+  const signedUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 300 });
+  return signedUrl;
 }
 
-// TODO: Añadir el resto de funciones necesarias de lógica de negocio
+// Función para obtener una nota específica de un usuario
+async function getNoteById(userId, noteId) {
+  const params = {
+    TableName: tableName,
+    Key: {
+      userId: userId,
+      noteId: noteId,
+    },
+  };
+
+  const data = await ddbDocClient.send(new GetCommand(params));
+  return data.Item;
+}
+
+// Función para eliminar una nota específica de un usuario
+async function deleteNoteById(userId, noteId) {
+  const params = {
+    TableName: tableName,
+    Key: {
+      userId: userId,
+      noteId: noteId,
+    },
+  };
+
+  const data = await ddbDocClient.send(new DeleteCommand(params));
+  return data;
+}
+
+// Función para procesar una nota: sintetizar audio, traducir y actualizar
+async function processNote(userId, noteId) {
+  // Obtener la nota de la base de datos
+  const note = await getNoteById(userId, noteId);
+  if (!note) {
+    throw new Error("Nota no encontrada");
+  }
+
+  const text = note.text;
+
+  // Sintetizar audio con Polly
+  const mp3Buffer = await textToSpeech(text);
+
+  // Generar clave única para S3 (ej: userId-noteId-timestamp.mp3)
+  const key = `${userId}-${noteId}-${Date.now()}.mp3`;
+
+  // Subir a S3 y obtener URL prefirmada
+  const signedUrl = await uploadToS3(mp3Buffer, key);
+
+  // Traducir el texto al inglés
+  const translateClient = new TranslateClient();
+  const translateCommand = new TranslateTextCommand({
+    Text: text,
+    SourceLanguageCode: "auto", // Detectar automáticamente
+    TargetLanguageCode: "en",
+  });
+  const translateResponse = await translateClient.send(translateCommand);
+  const translation = translateResponse.TranslatedText;
+
+  // Actualizar la nota en DynamoDB con la traducción
+  const updateParams = {
+    TableName: tableName,
+    Key: {
+      userId: userId,
+      noteId: noteId,
+    },
+    UpdateExpression: "SET #translation = :translation",
+    ExpressionAttributeNames: {
+      "#translation": "translation",
+    },
+    ExpressionAttributeValues: {
+      ":translation": translation,
+    },
+    ReturnValues: "ALL_NEW",
+  };
+  await ddbDocClient.send(new UpdateCommand(updateParams));
+
+  return {
+    audioUrl: signedUrl,
+    translation: translation,
+    noteId: noteId,
+    userId: userId,
+  };
+}
 
 // TODO: Exportar las funciones creadas
-export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3 };
+export { getNotesByUser, postNoteForUser, putNoteForUser, textToSpeech, uploadToS3, getNoteById, deleteNoteById, processNote };

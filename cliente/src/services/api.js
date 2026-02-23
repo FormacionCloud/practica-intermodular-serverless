@@ -20,28 +20,29 @@ export const createNote = async ({ noteId, text }) => {
 
 // GET /notes/{noteId}
 export const getNote = async (noteId) => {
-  const { data } = await api.get(`/notes/${noteId}`);
+  const { data } = await api.get(`/notes/${encodeURIComponent(noteId)}`);
   return data || null;
 };
 
 // PUT /notes/{noteId} - body: {attributes: {text}}
 export const updateNote = async (noteId, noteData) => {
-  return api.put(`/notes/${encodeURIComponent(noteId)}`, {
-    attributes: {
-      text: noteData.text 
-    }
+  const response = await api.put(`/notes/${encodeURIComponent(noteId)}`, {
+    text: noteData.text
   });
+  return response.data?.note || null;
 };
 
 // DELETE /notes/{noteId}
 export const deleteNote = async (noteId) => {
-  await api.delete(`/notes/${noteId}`);
+  await api.delete(`/notes/${encodeURIComponent(noteId)}`);
   return noteId;  // ← Confirma delete
 };
 
 // POST /notes/{noteId}/process
 export const processNote = async (noteId) => {
-  const { data } = await api.post(`/notes/${noteId}/process`);
+  const { data } = await api.post(
+    `/notes/${encodeURIComponent(noteId)}/process`,
+  );
   return data || { noteId, processing: 'completed' };
 };
 
