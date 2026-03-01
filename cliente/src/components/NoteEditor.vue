@@ -7,7 +7,7 @@
           {{ editing ? 'Editar nota' : 'Nueva nota' }}
         </h2>
         
-        <!-- ID: editable SOLO en creación -->
+        <!-- ID: editable SOLO crear -->
         <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
           <label class="block text-sm font-medium text-gray-700 mb-2">
             ID Nota {{ editing ? '(Solo lectura)' : '(Editable)' }}
@@ -26,26 +26,13 @@
         </div>
       </div>
       
-      <!-- Formulario con título y contenido -->
+      <!-- Form texto (editable siempre) -->
       <form @submit.prevent="handleSubmit" class="p-6">
         <div class="space-y-4">
-          <!-- Campo Título -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Título</label>
-            <input
-              v-model="localNote.title"
-              type="text"
-              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Título de la nota"
-              required
-            />
-          </div>
-
-          <!-- Campo Contenido -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Contenido</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Texto</label>
             <textarea 
-              v-model="localNote.content"
+              v-model="localNote.text"
               rows="6"
               class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-vertical"
               placeholder="Escribe tu nota aquí..."
@@ -86,27 +73,25 @@ const emit = defineEmits(['save', 'cancel']);
 const editing = computed(() => !!props.note.noteId);
 const localNote = ref({ 
   noteId: '', 
-  title: '',
-  content: '' 
+  text: '' 
 });
 
-// Cargar datos cuando la nota cambia (edición) o limpiar (creación)
+// ← FIX: Watch props.note para pre-rellenar
 watch(() => props.note, (note) => {
   if (note?.noteId) {
-    localNote.value = {
-      noteId: note.noteId,
-      title: note.title || '',
-      content: note.content || ''
-    };
+    // Modo editar: copiar datos
+    localNote.value.noteId = note.noteId;
+    localNote.value.text = note.text || '';
   } else {
-    localNote.value = { noteId: '', title: '', content: '' };
+    // Modo crear: limpiar
+    localNote.value.noteId = '';
+    localNote.value.text = '';
   }
 }, { immediate: true });
 
 const isValid = computed(() => 
   localNote.value.noteId.trim() && 
-  localNote.value.title.trim() &&
-  localNote.value.content.trim()
+  localNote.value.text.trim()
 );
 
 const handleSubmit = () => {

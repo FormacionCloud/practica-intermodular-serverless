@@ -2,14 +2,12 @@
   "name": "practica-intermodular-serverless",
   "description": "Práctica intermodular serverless",
   "version": "0.0.1",
-  "type": "module",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.995.0",
-    "@aws-sdk/client-polly": "^3.995.0",
-    "@aws-sdk/client-s3": "^3.995.0",
-    "@aws-sdk/client-translate": "^3.995.0",
-    "@aws-sdk/lib-dynamodb": "^3.995.0",
-    "@aws-sdk/s3-request-presigner": "^3.995.0"
+    "@aws-sdk/client-dynamodb": "^3.398.0",
+    "@aws-sdk/client-polly": "^3.984.0",
+    "@aws-sdk/client-s3": "^3.984.0",
+    "@aws-sdk/client-translate": "^3.984.0",
+    "@aws-sdk/lib-dynamodb": "^3.398.0"
   },
   "scripts": {}
 }

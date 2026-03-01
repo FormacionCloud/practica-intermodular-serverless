@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://ivdgn6ag2l.execute-api.us-east-1.amazonaws.com/Prod';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -10,13 +10,12 @@ const api = axios.create({
 // GET /notes
 export const getNotes = async () => {
   const { data } = await api.get('/notes');
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? data : [];  // ← Maneja vacío/array
 };
 
-// POST /notes (crear nueva nota)
-export const createNote = async ({ noteId, title, content }) => {
-  const response = await api.post('/notes', { noteId, title, content });
-  return response.data;
+export const createNote = async ({ noteId, text }) => {
+  const response = await api.post('/notes', { noteId, text });
+  return response.data || { userId: 'testuser', noteId, text };
 };
 
 // GET /notes/{noteId}
@@ -25,22 +24,25 @@ export const getNote = async (noteId) => {
   return data || null;
 };
 
-// PUT /notes/{noteId}
-export const updateNote = async (noteId, { title, content }) => {
-  const response = await api.put(`/notes/${noteId}`, { title, content });
-  return response.data;
+// PUT /notes/{noteId} - body: {attributes: {text}}
+export const updateNote = async (noteId, noteData) => {
+  return api.put(`/notes/${encodeURIComponent(noteId)}`, {
+    attributes: {
+      text: noteData.text 
+    }
+  });
 };
 
 // DELETE /notes/{noteId}
 export const deleteNote = async (noteId) => {
   await api.delete(`/notes/${noteId}`);
-  return noteId;
+  return noteId;  // ← Confirma delete
 };
 
 // POST /notes/{noteId}/process
 export const processNote = async (noteId) => {
   const { data } = await api.post(`/notes/${noteId}/process`);
-  return data;
+  return data || { noteId, processing: 'completed' };
 };
 
 export default api;
