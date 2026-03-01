@@ -1,80 +1,64 @@
-// Librería de funciones auxiliares
 import * as libreria from "../auxFunctions.mjs";
 
-// Encabezados CORS
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key"
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+  "Access-Control-Allow-Methods": "POST,OPTIONS"
 };
 
-// Handler
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
       headers: corsHeaders,
-      body: JSON.stringify({ message: `Esta función solo admite peticiones de tipo POST. Has usado: ${event.httpMethod}` })
+      body: JSON.stringify({ message: `Método no permitido: ${event.httpMethod}` })
     };
   }
 
-  console.info("Petición recibida:", event);
-
-  // Usuario autenticado
-  var userId, email, username;
-  try {
-    const userClaims = event.requestContext.authorizer.claims;
-    userId = userClaims.sub;
-    email = userClaims.email;
-    username = userClaims["cognito:username"];
-  } catch {
-    userId = "testuser";
-    email = "test@test.com";
-    username = "testuser";
+  const noteId = event.pathParameters?.noteId;
+  if (!noteId) {
+    return {
+      statusCode: 400,
+      headers: corsHeaders,
+      body: JSON.stringify({ message: "Falta noteId" })
+    };
   }
 
-  const noteData = JSON.parse(event.body);
-  const { noteId } = noteData;
-
-  var response;
+  let userId;
   try {
-    let note, mp3Buffer, audioUrl, translation;
+    userId = event.requestContext.authorizer.claims.sub;
+  } catch {
+    userId = "testuser";
+  }
 
-    // MOCK LOCAL para pruebas (quitar en producción)
-    if (!process.env.AWS_REGION) {
-      note = { noteId, content: "Contenido de prueba" };
-      mp3Buffer = Buffer.from("fake audio");
-      audioUrl = `audio-${noteId}-fake.mp3`;
-      translation = "Test translation";
-    } else {
-      const notes = await libreria.getNotesByUser(userId);
-      note = notes.find(n => n.noteId === noteId);
-      if (!note) throw new Error("Nota no encontrada");
-
-      mp3Buffer = await libreria.textToSpeech(note.content);
-      const audioKey = `audio-${noteId}-${Date.now()}.mp3`;
-      audioUrl = await libreria.uploadToS3(mp3Buffer, audioKey);
-
-      translation = await libreria.translateNote(note.content, "en");
-      await libreria.updateNote(userId, noteId, note.timestamp, { translation });
+  try {
+    const notes = await libreria.getNotesByUser(userId);
+    const note = notes.find(n => n.noteId === noteId);
+    if (!note) {
+      return {
+        statusCode: 404,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "Nota no encontrada" })
+      };
     }
 
-    response = {
+    const mp3Buffer = await libreria.textToSpeech(note.content);
+    const audioKey = `audio-${noteId}-${Date.now()}.mp3`;
+    const audioUrl = await libreria.uploadToS3(mp3Buffer, audioKey);
+    const translation = await libreria.translateNote(note.content, "en");
+    await libreria.updateNote(userId, noteId, note.timestamp, { translation });
+
+    return {
       statusCode: 200,
-      headers: corsHeaders, // <--- AÑADIDO
+      headers: corsHeaders,
       body: JSON.stringify({ noteId, audioUrl, translation })
     };
   } catch (err) {
     console.error("Error:", err);
-    response = {
-      statusCode: 400,
-      headers: corsHeaders, // <--- AÑADIDO
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ message: err.message })
     };
   }
-
-  console.info(
-    `Petición a ruta: ${event.path}; código de estado: ${response.statusCode}; datos devueltos: ${response.body}; usuario logueado: ${userId}`
-  );
-
-  return response;
 };

@@ -1,8 +1,19 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  Práctica intermodular serverless
+  Práctica intermodular serverless - Frontend incluido
+
 Transform:
   - AWS::Serverless-2016-10-31
+
+Parameters:
+  FrontendBucketName:
+    Type: String
+    Description: Nombre único global para el bucket del frontend (ej. notas-tus-iniciales). Si se deja vacío, se generará automáticamente.
+    Default: ""
+
+Conditions:
+  # Condición para usar el nombre personalizado solo si se proporcionó
+  HasBucketName: !Not [!Equals [!Ref FrontendBucketName, ""]]
 
 Resources:
 
@@ -32,13 +43,44 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
-  # Bucket S3 para almacenar audios
+  # Bucket S3 para almacenar audios (privado)
   AppBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${AWS::StackName}-notes-bucket"
 
-  # Función Lambda para obtener todas las notas
+  # Bucket S3 para el frontend (público, sitio web estático)
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !If
+        - HasBucketName
+        - !Ref FrontendBucketName
+        - !Sub "notas-${AWS::AccountId}-frontend"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  # Política del bucket frontend para acceso público de lectura
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+
+  # Funciones Lambda (se mantienen exactamente igual que en tu plantilla original)
   getNotes:
     Type: AWS::Serverless::Function
     Properties:
@@ -48,7 +90,6 @@ Resources:
         - x86_64
       MemorySize: 128
       Timeout: 5
-      Description: Función para leer las notas de la tabla
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AppTable
@@ -63,7 +104,6 @@ Resources:
             Path: /notes
             Method: get
 
-  # Función Lambda para crear una nota
   postNotes:
     Type: AWS::Serverless::Function
     Properties:
@@ -73,7 +113,6 @@ Resources:
         - x86_64
       MemorySize: 128
       Timeout: 5
-      Description: Función para crear una nota en la tabla
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AppTable
@@ -88,7 +127,6 @@ Resources:
             Path: /notes
             Method: post
 
-  # Función Lambda para obtener una nota específica
   getNote:
     Type: AWS::Serverless::Function
     Properties:
@@ -98,7 +136,6 @@ Resources:
         - x86_64
       MemorySize: 128
       Timeout: 5
-      Description: Función para leer una nota de la tabla
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AppTable
@@ -113,7 +150,6 @@ Resources:
             Path: /notes/{noteId}
             Method: get
 
-  # Función Lambda para eliminar una nota
   deleteNote:
     Type: AWS::Serverless::Function
     Properties:
@@ -123,7 +159,6 @@ Resources:
         - x86_64
       MemorySize: 128
       Timeout: 5
-      Description: Función para eliminar una nota de la tabla
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AppTable
@@ -138,7 +173,6 @@ Resources:
             Path: /notes/{noteId}
             Method: delete
 
-  # Función Lambda para crear o actualizar una nota
   putNote:
     Type: AWS::Serverless::Function
     Properties:
@@ -148,7 +182,6 @@ Resources:
         - x86_64
       MemorySize: 128
       Timeout: 5
-      Description: Función para crear o actualizar notas en la tabla
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AppTable
@@ -163,7 +196,6 @@ Resources:
             Path: /notes/{noteId}
             Method: put
 
-  # Función Lambda para procesar notas (audio + traducción)
   processNote:
     Type: AWS::Serverless::Function
     Properties:
@@ -173,7 +205,6 @@ Resources:
         - x86_64
       MemorySize: 256
       Timeout: 10
-      Description: Función para procesar notas, generar audio y traducciones
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AppTable
@@ -218,3 +249,9 @@ Outputs:
   NotesApiUrl:
     Value: !Sub "https://${NotesApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
     Description: URL del API Gateway
+  FrontendBucketName:
+    Value: !Ref FrontendBucket
+    Description: Nombre del bucket para el frontend (subir aquí los archivos estáticos)
+  FrontendWebsiteURL:
+    Value: !GetAtt FrontendBucket.WebsiteURL
+    Description: URL pública del sitio web estático 

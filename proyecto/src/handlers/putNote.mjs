@@ -1,68 +1,68 @@
-// Librería de funciones auxiliares
 import * as libreria from "../auxFunctions.mjs";
 
-// Encabezados CORS
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key"
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+  "Access-Control-Allow-Methods": "PUT,OPTIONS"
 };
 
-// Handler
 export const handler = async (event) => {
   if (event.httpMethod !== "PUT") {
     return {
       statusCode: 405,
       headers: corsHeaders,
-      body: JSON.stringify({ message: `Esta función solo admite peticiones de tipo PUT. Has usado: ${event.httpMethod}` })
+      body: JSON.stringify({ message: `Método no permitido. Usaste: ${event.httpMethod}` })
     };
   }
 
   console.info("Petición recibida:", event);
 
-  // Usuario autenticado
-  var userId, email, username;
-  try {
-    const userClaims = event.requestContext.authorizer.claims;
-    userId = userClaims.sub;
-    email = userClaims.email;
-    username = userClaims["cognito:username"];
-  } catch {
-    userId = "testuser";
-    email = "test@test.com";
-    username = "testuser";
+  const noteId = event.pathParameters?.noteId;
+  if (!noteId) {
+    return {
+      statusCode: 400,
+      headers: corsHeaders,
+      body: JSON.stringify({ message: "Falta el parámetro noteId en la URL" })
+    };
   }
 
-  const noteData = JSON.parse(event.body);
-  const { noteId, title, content, timestamp } = noteData;
-  const ts = timestamp || Date.now();
-
-  var response;
+  let userId;
   try {
-    // MOCK LOCAL para pruebas (quitar en producción)
-    let note;
-    if (!process.env.AWS_REGION) {
-      note = { noteId, title, content, timestamp: ts };
-    } else {
-      note = await libreria.postNoteForUser(userId, noteId, title, content, ts);
-    }
+    userId = event.requestContext.authorizer.claims.sub;
+  } catch {
+    userId = "testuser";
+  }
 
-    response = {
+  let title, content, timestamp;
+  try {
+    const body = JSON.parse(event.body);
+    title = body.title;
+    content = body.content;   // <-- Usa content (correcto)
+    timestamp = body.timestamp || Date.now();
+    if (!title || !content) {
+      throw new Error("Faltan campos obligatorios (title, content)");
+    }
+  } catch (err) {
+    return {
+      statusCode: 400,
+      headers: corsHeaders,
+      body: JSON.stringify({ message: "Cuerpo de petición inválido o incompleto" })
+    };
+  }
+
+  try {
+    const note = await libreria.postNoteForUser(userId, noteId, title, content, timestamp);
+    return {
       statusCode: 200,
-      headers: corsHeaders, // <--- AÑADIDO
+      headers: corsHeaders,
       body: JSON.stringify(note)
     };
   } catch (err) {
-    console.error("Error:", err);
-    response = {
-      statusCode: 400,
-      headers: corsHeaders, // <--- AÑADIDO
-      body: JSON.stringify({ message: "Ha habido un problema" })
+    console.error("Error en putNote:", err);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ message: "Error al guardar la nota" })
     };
   }
-
-  console.info(
-    `Petición a ruta: ${event.path}; código de estado: ${response.statusCode}; datos devueltos: ${response.body}; usuario logueado: ${userId}`
-  );
-
-  return response;
 };
