@@ -539,7 +539,7 @@ En esta última parte configuraremos servicios de AWS para **monitorizar** el fu
 
 1.  Accede a la consola de **API Gateway**
 2.  Selecciona tu API y ve a la pestaña **Stages**
-3.  Selecciona el stage que se haya creado
+3.  Selecciona el stage `Prod`
 4.  En la pestaña **Logs/Tracing**:
     -   Habilita **CloudWatch Logs** con nivel `INFO`
     -   Habilita **Detailed Metrics**
