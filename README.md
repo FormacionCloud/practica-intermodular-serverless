@@ -530,3 +530,177 @@ Súbelo al bucket S3 `notas-` + tus iniciales, eliminando previamente reemplazar
 Finalmente deberás actualizar en la app de Cognito la URL de Callback y logout, para que deje de apuntar a http://localhost:puerto de las pruebas y ahora se dirija al index.html que has subido.
 
 Una vez hecho, vuelve a hacer las pruebas de funcionamiento y todo listo.
+
+## Monitorización y observabilidad
+
+En esta última parte configuraremos servicios de AWS para **monitorizar** el funcionamiento de la aplicación y detectar posibles problemas. Utilizaremos **CloudWatch Application Signals** junto con **OpenTelemetry** y **X-Ray** para obtener visibilidad completa de nuestra aplicación serverless.
+
+### Activación de logs detallados en API Gateway
+
+1.  Accede a la consola de **API Gateway**
+2.  Selecciona tu API y ve a la pestaña **Stages**
+3.  Selecciona el stage que se haya creado
+4.  En la pestaña **Logs/Tracing**:
+    -   Habilita **CloudWatch Logs** con nivel `INFO`
+    -   Habilita **Detailed Metrics**
+    -   Habilita **X-Ray Tracing**
+
+
+### Instrumentación con OpenTelemetry y activación de X-Ray
+
+AWS Lambda soporta **instrumentación automática** mediante OpenTelemetry (OTEL), que es el estándar moderno para observabilidad. Sin embargo, para que las trazas se visualicen en CloudWatch y X-Ray, es necesario **activar también el tracing de X-Ray** en las funciones Lambda.
+
+> [!NOTE] **¿Por qué necesitamos tanto OpenTelemetry como X-Ray?**
+> 
+> OpenTelemetry es el estándar abierto para instrumentación que captura las trazas de tu aplicación. Sin embargo, estas trazas necesitan ser **enviadas a un backend** para su almacenamiento y visualización.
+> 
+> En AWS Lambda, cuando activas `Tracing: Active`, se inicia el **demonio de X-Ray** que actúa como receptor de las trazas. La capa ADOT (AWS Distro for OpenTelemetry) envía automáticamente las trazas capturadas por OpenTelemetry al demonio de X-Ray, que a su vez las reenvía al servicio X-Ray de AWS.
+> 
+> Por tanto:
+> 
+> -   **OpenTelemetry**: Captura las trazas (instrumentación)
+> -   **X-Ray daemon**: Recibe y reenvía las trazas al servicio X-Ray
+> -   **X-Ray service**: Almacena y permite visualizar las trazas en CloudWatch
+> 
+> Sin activar `Tracing: Active`, el demonio de X-Ray no estaría disponible y las trazas no tendrían donde enviarse.
+
+Modifica la plantilla `template.yml` para habilitar el tracing y añadir la capa ADOT. Puedes añadir una **configuración global** para todas las funciones en la sección `Globals`:
+
+```yaml
+Globals:
+  Function:
+    Tracing: Active
+    Layers:
+      - 'arn:aws:lambda:eu-west-1:615299751070:layer:AWSOpenTelemetryDistroJs:11'
+    Environment:
+      Variables:
+        AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-instrument
+```
+
+> [!NOTE] La capa ADOT proporciona instrumentación automática para las llamadas a servicios de AWS (DynamoDB, S3, Polly, Translate, etc.) y para las peticiones HTTP, sin necesidad de modificar el código de las funciones.
+
+> [!NOTE] Puedes localizar los ARN de la capa ADOT en la [documentación oficial](https://aws-otel.github.io/docs/getting-started/lambda#aws-lambda-layer-for-opentelemetry-arns)
+
+Si quisiéramos añadir **trazas personalizadas** para operaciones específicas, podríamos instalar el SDK de OpenTelemetry:
+
+```bash
+npm install @opentelemetry/api
+```
+
+Y añadir spans personalizados en el código (**no es necesario hacer esta parte**):
+
+```javascript
+// Ejemplo que no es necesario implementar
+import { trace } from '@opentelemetry/api';
+
+async function getNotesByUser(userId) {
+  const tracer = trace.getTracer('notes-app');
+
+  return tracer.startActiveSpan('getNotes-operation', async (span) => {
+    try {
+      span.setAttribute('userId', userId);
+      span.setAttribute('operation', 'getNotes');
+      // Tu código aquí
+      span.end();
+      return result;
+    } catch (error) {
+      span.recordException(error);
+      span.setStatus({ code: 2, message: error.message });
+      span.end();
+      throw error;
+    }
+  });
+};
+```
+
+
+### Generación de información
+
+Una vez activada la instrumentación, **accede a la aplicación** a través del cliente web y **realiza varias operaciones** de creación, borrado, edición y síntesis de notas. De esta manera se generarán **trazas**, **métricas** y **logs** que podremos inspeccionar a continuación.
+
+
+### CloudWatch Application Signals
+
+CloudWatch Application Signals proporciona una vista unificada del rendimiento de tu aplicación, incluyendo métricas, trazas y mapas de servicios.
+
+1.  Accede a **CloudWatch** en la consola de AWS
+2.  Ve a **Application Signals** en el menú lateral y explora las secciones **Services**, **Application Map** y **Transaction Search**
+
+> [!NOTE] Application Signals se activa automáticamente cuando utilizas la capa ADOT con la variable de entorno `AWS_LAMBDA_EXEC_WRAPPER=/opt/otel-instrument`. No requiere configuración adicional.
+
+
+### Análisis del Application Map
+
+El **Application Map** de CloudWatch Application Signals proporciona una visualización gráfica de la arquitectura de tu aplicación y las dependencias entre servicios.
+
+1.  Accede a **CloudWatch** / **Application Signals** / **Application Map**
+2.  Localiza los mapas de la aplicación e inspecciónalos
+3.  Haz clic en los diferentes nodos para tener más detalles
+4.  Haz clic sobre una función lambda para ver las llamadas a los servicios AWS que se han realizado dentro de ella (DynamoDB, Polly,&#x2026;). Revisa las métricas de las llamadas a dichos servicios: errores, latencia,&#x2026;
+5.  Observa la tasa de errores y aciertos de las diferentes acciones realizadas en la aplicación
+6.  Observa las **métricas** generadas
+7.  Observa el estado de salud con código de colores
+
+![img](./imagenes/12_application_map.png)
+
+La pestaña **Services** también proporciona información muy valiosa:
+
+1.  Accede a **CloudWatch** / **Application Signals** / **Services**
+2.  Selecciona una función Lambda de la aplicación
+3.  Analiza la información que aparece
+
+![img](./imagenes/13_services.png)
+
+> [!NOTE] El Application Map se actualiza automáticamente conforme tu aplicación recibe tráfico. Si no ves conexiones a DynamoDB u otros servicios, asegúrate de haber realizado peticiones que invoquen esas operaciones.
+
+
+### Integración de dashboards con Application Insights
+
+CloudWatch Application Insights proporciona dashboards automáticos y detección de anomalías para aplicaciones serverless:
+
+1.  Accede a **CloudWatch** / **Application Signals** / **Application Insights**
+2.  Haz clic en **Add an application**
+3.  Selecciona **Resource group based application**
+4.  Localiza y selecciona el grupo de recursos asociado a la **plantilla SAM** del proyecto
+5.  Deja las opciones por defecto y **crea la aplicación**
+
+Una vez creada la aplicación, Application Insights creará automáticamente:
+
+-   **Dashboards personalizados** con métricas clave de todos los recursos
+-   **Detección de anomalías** en métricas como latencia, errores y throughput
+-   **Alertas automáticas** cuando se detecten problemas
+
+**Accede** al dashboard de la aplicación y **explora** la información que aparece.
+
+> [!NOTE] Application Insights utiliza machine learning para detectar automáticamente patrones anómalos en tus métricas y logs, sin necesidad de configurar umbrales manualmente.
+
+> [!IMPORTANT] Application Insights crea un gran número de alarmas y recursos en CloudWatch. Si se deja mucho tiempo, puede acarrear un coste considerable. Al terminar este apartado, **elimina la aplicación** de Application Insights.
+
+
+### Simulación de fallos y análisis
+
+Para verificar que la monitorización funciona correctamente, simula algunos fallos:
+
+1.  **Error en DynamoDB**:
+    -   Modifica temporalmente el **nombre de la tabla** en la **variable de entorno** de una función Lambda
+    -   A través del cliente web de la aplicación, realiza **varias peticiones** que invoquen esa función
+    -   Verifica que el error aparece en:
+        -   CloudWatch Logs
+        -   Application Map (el nodo de la función aparecerá en rojo). Analiza la traza para ver dónde falló exactamente
+        -   Application Insights: pasado un tiempo, si el número de errores es significativo, se detectará como un problema
+2.  **Error de autenticación**:
+    -   Intenta acceder a la API sin token o con un token inválido
+    -   Verifica que se registra un error 401 en los logs de API Gateway
+    -   Observa cómo aumenta la métrica de errores 4xx en el dashboard
+
+Restaura el código a su estado original después de las pruebas.
+
+
+## Entrega final
+Una vez completada la fase 3:
+1.  Asegúrate de que todos los cambios están sincronizados en tu repositorio de GitHub
+2.  Verifica que la aplicación funciona correctamente con autenticación
+3.  Verifica que los servicios de monitorización están activos y funcionando
+4.  Realiza una **Pull Request** al repositorio original para entregar la práctica
+
+> [!IMPORTANT] No destruyas los recursos de AWS hasta que la práctica haya sido corregida. Recuerda que son servicios serverless con coste mínimo o nulo si no se utilizan intensivamente.
