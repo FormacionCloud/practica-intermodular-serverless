@@ -41,7 +41,7 @@ export const handler = async (event) => {
   // Obtenemos los datos de la nota. Vendrán en el "body" de la petición POST
   var noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
   var noteId = noteData.noteId;
-  var noteText = noteData.text;
+  var noteText = noteData.noteText;
 
   var response;
 

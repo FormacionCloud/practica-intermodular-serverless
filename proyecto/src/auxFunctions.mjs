@@ -42,7 +42,7 @@ async function postNoteForUser(userId, noteId, noteText) {
   // Petición PUT indicando la clave primaria: partición + ordenación
   var params = {
     TableName: tableName,
-    Item: { userId: userId, noteId: noteId, text: noteText },
+    Item: { userId: userId, noteId: noteId, noteText: noteText },
   };
 
   // Petición a DynamoDB
