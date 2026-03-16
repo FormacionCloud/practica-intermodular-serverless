@@ -24,7 +24,7 @@ export const handler = async (event) => {
   // Si no tenemos Cognito conectado, lo que haremos será definir un usuario
   // de ejemplo, llamado "testuser". Así, durante la fase de desarrollo, todas
   // las notas estarán referenciadas a este usuario de test
-  var userId, email, username;
+  let userId, email, username;
   try {
     const userClaims = event.requestContext.authorizer.claims;
 
@@ -39,15 +39,20 @@ export const handler = async (event) => {
     username = "testuser";
   }
 
-  var noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
   // TODO: Obtener campos del cuerpo de la petición en caso de ser necesario
+  let noteId;
+  if (event.body) {
+    const noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
+    noteId = noteData.noteId;
+  } else {
+    throw new Error("El body no contiene noteId");
+  }
 
-  var response;
+  let response;
 
   try {
     // TODO: Llamar a la función de la librería encargada de realizar el procesamiento o los procesamientos necesarios
     // Llamamos a la función de la librería encargada de devolver la nota de un usuario
-
     var items = await libreria.getNoteByUser(userId, noteId);
     // Si la consulta no genera error, devolvemos el listado de elementos y código 200
     // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:
