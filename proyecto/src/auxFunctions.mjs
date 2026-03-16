@@ -93,5 +93,26 @@ async function uploadToS3(mp3Data, key) {
 
 // TODO: Añadir el resto de funciones necesarias de lógica de negocio
 
+async function getNoteByUser(userId, noteId) {
+  // Parámetros de la petición de DynamoDB
+  // Hacemos una query indicando una condición de igualdad en la clave de partición
+  // Asumiendo que el esquema de la tabla haga referencia al userId como valor de la
+  // clave de partición
+  var params = {
+    TableName: tableName,
+    ExpressionAttributeValues: {
+      ":userId": userId,
+      ":noteId": noteId,
+    },
+    // KeyConditionExpression: "userId= :userId",
+    KeyConditionExpression: "userId= :userId AND noteId = :noteId",
+  };
+
+  // Petición a DynamoDB
+  const data = await ddbDocClient.send(new QueryCommand(params));
+  return data.Items;
+}
+
+
 // TODO: Exportar las funciones creadas
-export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3 };
+export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3, getNoteByUser };
