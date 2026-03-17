@@ -127,5 +127,15 @@ async function deleteNote(userId, noteId) {
   await ddbDocClient.send(new DeleteCommand(params));
 }
 
+async function putNote(userId, noteId, noteText) {
+  console.log("Edit params:", userId, noteId, noteText);
+  const params = {
+    TableName: tableName,
+    Item: { userId, noteId, noteText },
+  };
+  await ddbDocClient.send(new PutCommand(params));
+}
+
+
 // TODO: Exportar las funciones creadas
-export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3, getNoteByUser, deleteNote };
+export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3, getNoteByUser, deleteNote, putNote };

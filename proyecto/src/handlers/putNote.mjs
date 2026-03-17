@@ -9,9 +9,9 @@ import * as libreria from "../auxFunctions.mjs";
 // Handler
 export const handler = async (event) => {
   // TODO: reemplazar METODO por método apropiado (PUT, POST, GET,...)
-  if (event.httpMethod !== "DELETE") {
+  if (event.httpMethod !== "PUT") {
     throw new Error(
-      `Esta función solo admite peticiones de tipo DELETE. El método que has usado es: ${event.httpMethod}`,
+      `Esta función solo admite peticiones de tipo PUT. El método que has usado es: ${event.httpMethod}`,
     );
   }
 
@@ -26,7 +26,8 @@ export const handler = async (event) => {
   var userId, email, username;
   try {
     const userClaims = event.requestContext.authorizer.claims;
-    userId = userClaims.sub || userClaims.userId;
+
+    userId = userClaims.sub;
     email = userClaims.email;
     username = userClaims["cognito:username"];
   } catch (error) {
@@ -37,40 +38,33 @@ export const handler = async (event) => {
     username = "testuser";
   }
 
-  
   // TODO: Obtener campos del cuerpo de la petición en caso de ser necesario
-  let noteId;
-  if (event.body) {
-    const noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
-    noteId = noteData.noteId;
-  } else {
-    throw new Error("El body no contiene noteId");
+  const { noteId, noteText } = JSON.parse(event.body || "{}");
+  if (!noteId || !noteText) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: "noteId y noteText son obligatorios" }),
+    };
   }
 
-  if (!noteId) {
-  throw new Error("noteId es obligatorio");
-  }
-
-  console.log("userId:", userId);
-  console.log("noteId:", noteId);
-  
   var response;
+
   try {
     // TODO: Llamar a la función de la librería encargada de realizar el procesamiento o los procesamientos necesarios
-    await libreria.deleteNote(userId, noteId);
+    await libreria.putNote(userId, noteId, noteText);
     // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:
     // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
     response = {
       // TODO: cambiar y añadir campos necesarios
       statusCode: 200,
-      body: JSON.stringify({ message: "Nota eliminada correctamente" }),      
+      body: JSON.stringify({ message: "Nota actualizada correctamente" }),      
     };
   } catch (err) {
-    console.log("Error al borrar nota", err);
+    console.log("Error al actualizar nota:", err);
     // Si la consulta genera error, devolvemos una descripción del error y código 400, con el mismo formato
-    var errorMessage = { message: "No se pudo eliminar la nota" };
+    var errorMessage = { message: "Ha habido un problema al actualizar nota" };
     response = {
-      statusCode: 400,
+      statusCode: 500,
       body: JSON.stringify(errorMessage),
     };
   }

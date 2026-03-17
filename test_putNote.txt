@@ -1,0 +1,17 @@
+{
+  "resource": "/my/path",
+  "path": "/my/path",
+  "httpMethod": "PUT",
+  "requestContext": {
+    "authorizer": {
+      "claims": {
+        "sub": "Mario",
+        "email": "Mario@ejemplo.com",
+        "username": "Mario"
+      }
+    },
+    "path": "/my/path"
+  },
+  "body": "{\"noteId\":\"20260316prueba4\",\"noteText\":\"test desde lambda putNote consolaAws prueba4 20260317\"}",
+  "isBase64Encoded": false
+}
