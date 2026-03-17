@@ -1,0 +1,20 @@
+{
+  "resource": "/my/path",
+  "path": "/my/path",
+  "httpMethod": "GET",
+  "headers": {},
+  "multiValueHeaders": {},
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "requestContext": {
+    "authorizer": {
+      "claims": {
+        "sub": "Juan",
+        "email": "juan@test.com",
+        "cognito:username": "Juan"
+      }
+    }
+  },
+  "body": "{\"noteId\":\"20260316prueba3\"}",
+  "isBase64Encoded": false
+}

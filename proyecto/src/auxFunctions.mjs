@@ -4,6 +4,7 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   PutCommand,
+  DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -113,6 +114,18 @@ async function getNoteByUser(userId, noteId) {
   return data.Items;
 }
 
+async function deleteNote(userId, noteId) {
+  console.log("DELETE params:", userId, noteId);
+  const params = {
+    TableName: tableName,
+    Key: {
+      userId: userId,
+      noteId: noteId,
+    },
+  };
+  // Petición a DynamoDB
+  await ddbDocClient.send(new DeleteCommand(params));
+}
 
 // TODO: Exportar las funciones creadas
-export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3, getNoteByUser };
+export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3, getNoteByUser, deleteNote };
