@@ -1,5 +1,10 @@
 {
   "path": "/notes",
   "httpMethod": "POST",
-  "body": "{\"noteId\": \"id1\",\"text\": \"Texto de ejemplo de la nota\"}"
+    "requestContext": {
+    "authorizer": {
+      "claims": { "sub": "Miguel" }
+    }
+  },
+  "body": "{\"noteId\": \"20260319-3\",\"noteText\": \"Texto de ejemplo de la nota\"}"
 }
