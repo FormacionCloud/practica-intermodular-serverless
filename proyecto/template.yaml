@@ -238,6 +238,8 @@ Outputs:
     Value: !Ref deleteNote
   processNoteFunctionName:
     Value: !Ref processNote
+  bucketName:
+    Value: !Ref AppBucket
   NotesApiUrl:
     Description: "URL de la API Gateway para testing frontend"
     Value: !Sub "https://${NotesApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

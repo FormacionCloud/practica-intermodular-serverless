@@ -6,6 +6,13 @@ import * as libreria from "../auxFunctions.mjs";
 // Por ello, el evento tendrá el formato descrito en la documentación:
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
+// Headers CORS
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
+
 // Handler
 export const handler = async (event) => {
   // Si no se recibe el método GET, se genera un error
@@ -46,7 +53,7 @@ export const handler = async (event) => {
   var response;
 
   try {
-    // Llamamos a la función de la librería encargada de devolver las notas de un usuario
+    // Llamamos a la función de la librería encargada de añadir el item de la nota
     var data = await libreria.postNoteForUser(userId, noteId, noteText),
       // Si la consulta no genera error, devolvemos un código 201, sin datos
       // Opcionalmente podríamos devolver los datos creados también
@@ -54,6 +61,8 @@ export const handler = async (event) => {
       // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
       response = {
         statusCode: 201,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "Nota actualizada correctamente" }), 
       };
   } catch (err) {
     console.log("Error", err);
@@ -61,6 +70,7 @@ export const handler = async (event) => {
     var errorMessage = { message: "Ha habido un problema al crear la nota" };
     response = {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify(errorMessage),
     };
   }
