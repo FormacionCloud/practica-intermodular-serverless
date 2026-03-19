@@ -44,12 +44,12 @@ async function getNotesByUser(userId) {
 }
 
 // Función para crear una nota para un usuario
-async function postNoteForUser(userId, noteId, noteText) {
+async function postNoteForUser(userId, noteId, text) {
   // Parámetros de la petición de DynamoDB
   // Petición PUT indicando la clave primaria: partición + ordenación
   var params = {
     TableName: tableName,
-    Item: { userId: userId, noteId: noteId, noteText: noteText },
+    Item: { userId: userId, noteId: noteId, text: text },
   };
 
   // Petición a DynamoDB
@@ -90,11 +90,11 @@ async function deleteNote(userId, noteId) {
   await ddbDocClient.send(new DeleteCommand(params));
 }
 
-async function putNote(userId, noteId, noteText) {
-  console.log("Edit params:", userId, noteId, noteText);
+async function putNote(userId, noteId, text) {
+  console.log("Edit params:", userId, noteId, text);
   const params = {
     TableName: tableName,
-    Item: { userId, noteId, noteText },
+    Item: { userId, noteId, text },
   };
   await ddbDocClient.send(new PutCommand(params));
 }
@@ -109,10 +109,10 @@ async function processNote(userId, noteId) {
     throw new Error("Nota no encontrada");
   }
 
-  const noteText = items[0].noteText;
+  const text = items[0].text;
 
   // 2. Generar audio con Polly
-  const mp3Buffer = await textToSpeech(noteText);
+  const mp3Buffer = await textToSpeech(text);
 
   // 3. Subir a S3
   const key = `${userId}/${noteId}.mp3`;
@@ -133,7 +133,7 @@ async function processNote(userId, noteId) {
 
   // 5. Traducir texto
   const translateCmd = new TranslateTextCommand({
-    Text: noteText,
+    Text: text,
     SourceLanguageCode: "es",
     TargetLanguageCode: "en",
   });

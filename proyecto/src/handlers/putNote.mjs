@@ -46,11 +46,11 @@ export const handler = async (event) => {
   }
 
   // TODO: Obtener campos del cuerpo de la petición en caso de ser necesario
-  const { noteId, noteText } = JSON.parse(event.body || "{}");
-  if (!noteId || !noteText) {
+  const { noteId, text } = JSON.parse(event.body || "{}");
+  if (!noteId || !text) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ message: "noteId y noteText son obligatorios" }),
+      body: JSON.stringify({ message: "noteId y text son obligatorios" }),
     };
   }
 
@@ -58,7 +58,7 @@ export const handler = async (event) => {
 
   try {
     // TODO: Llamar a la función de la librería encargada de realizar el procesamiento o los procesamientos necesarios
-    await libreria.putNote(userId, noteId, noteText);
+    await libreria.putNote(userId, noteId, text);
     // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:
     // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
     response = {

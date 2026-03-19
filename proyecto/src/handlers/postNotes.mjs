@@ -48,13 +48,13 @@ export const handler = async (event) => {
   // Obtenemos los datos de la nota. Vendrán en el "body" de la petición POST
   var noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
   var noteId = noteData.noteId;
-  var noteText = noteData.noteText;
+  var text = noteData.text;
 
   var response;
 
   try {
     // Llamamos a la función de la librería encargada de añadir el item de la nota
-    var data = await libreria.postNoteForUser(userId, noteId, noteText),
+    var data = await libreria.postNoteForUser(userId, noteId, text),
       // Si la consulta no genera error, devolvemos un código 201, sin datos
       // Opcionalmente podríamos devolver los datos creados también
       // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:

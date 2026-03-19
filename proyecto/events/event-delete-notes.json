@@ -1,10 +1,10 @@
 {
   "path": "/notes",
-  "httpMethod": "POST",
+  "httpMethod": "DELETE",
   "requestContext": {
     "authorizer": {
       "claims": { "sub": "testuser" }
     }
   },
-  "body": "{\"noteId\": \"2137\",\"text\": \"Texto de ejemplo de la nota\"}"
+  "body": "{\"noteId\": \"2137\"}"
 }

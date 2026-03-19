@@ -41,6 +41,7 @@ export const handler = async (event) => {
     // Si Cognito no está conectado, la información de autenticación no le será pasada
     // a la función. En este caso utilizaremos un usuario fijo de test, "testuser"
     userId = "testuser";
+    //userId = "Miguel";
     email = "test@test.com";
     username = "testuser";
   }

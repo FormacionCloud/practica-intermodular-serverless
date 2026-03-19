@@ -1,4 +1,9 @@
 {
+  "path": "/notes",
   "httpMethod": "GET",
-  "path": "/notes"
+  "requestContext": {
+    "authorizer": {
+      "claims": { "sub": "Miguel" }
+    }
+  }
 }
