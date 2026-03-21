@@ -45,7 +45,27 @@ export const handler = async (event) => {
     username = "testuser";
   }
 
-const { noteId } = JSON.parse(event.body || "{}");
+  let noteId;
+  try {
+    const body = JSON.parse(event.body || "{}");
+
+    // 1. Desde pathParameters (si se usa /notes/{noteId}/process)
+    noteId = event.pathParameters?.noteId;
+
+    // 2. Desde body directo
+    if (!noteId) {
+      noteId = body.noteId;
+    }
+
+    // 3. Desde attributes (desde Vite lo recibimos por aquí)
+    if (!noteId) {
+      noteId = body?.attributes?.noteId;
+    }
+
+  } catch (error) {
+    console.error("Error parseando body:", error);
+  }
+
 
 if (!noteId) {
   return {
@@ -55,17 +75,16 @@ if (!noteId) {
   };
 }
 
-try {
-  const url = await libreria.processNote(userId, noteId);
+console.log("Processing note:", userId, noteId);
 
-  return {
-    statusCode: 200,
-    headers: corsHeaders,
-    body: JSON.stringify({
-      message: "Nota procesada correctamente",
-      url: url,
-    }),
-  };
+try {
+const result = await libreria.processNote(userId, noteId);
+
+return {
+  statusCode: 200,
+  headers: corsHeaders,
+  body: JSON.stringify(result),
+};
 
 } catch (err) {
   console.log("Error", err);
@@ -77,9 +96,4 @@ try {
   };
 }
 
-  console.info(
-    `Petición a ruta: ${event.path}; código de estado: ${response.statusCode}; datos devueltos: ${response.body}; usuario logueado: ${userId}`,
-  );
-
-  return response;
 };

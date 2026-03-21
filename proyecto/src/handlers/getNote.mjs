@@ -64,20 +64,28 @@ export const handler = async (event) => {
     // Si la consulta no genera error, devolvemos el listado de elementos y código 200
     // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:
     // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
-    response = {
-      // TODO: cambiar y añadir campos necesarios
-      statusCode: 200,
-      headers: corsHeaders,
-      body: JSON.stringify(items),
-    };
+    if (items && items.length > 0) {
+        // Devolvemos solo el primer elemento
+        response = {
+            statusCode: 200,
+            headers: corsHeaders,
+            body: JSON.stringify(items[0]), // Nota individual, no el array
+        };
+    } else {
+        // No hay elementos, devolvemos 404
+        response = {
+            statusCode: 404,
+            headers: corsHeaders,
+            body: JSON.stringify({ message: "Nota no encontrada" }),
+        };
+    }
   } catch (err) {
     console.log("Error", err);
     // Si la consulta genera error, devolvemos una descripción del error y código 400, con el mismo formato
-    var errorMessage = { message: "Ha habido un problema" };
     response = {
-      statusCode: 400,
-      headers: corsHeaders,
-      body: JSON.stringify(errorMessage),
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "Ha habido un problema" }),
     };
   }
 

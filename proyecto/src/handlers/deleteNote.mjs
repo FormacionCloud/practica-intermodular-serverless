@@ -47,12 +47,16 @@ export const handler = async (event) => {
   
   // TODO: Obtener campos del cuerpo de la petición en caso de ser necesario
   let noteId;
-  if (event.body) {
-    const noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
-    noteId = noteData.noteId;
-  } else {
-    throw new Error("El body no contiene noteId");
-  }
+if (event.body) {
+  const data = JSON.parse(event.body);
+  noteId = data.noteId;
+
+} else if (event.queryStringParameters) {
+  noteId = event.queryStringParameters.noteId;
+
+} else if (event.pathParameters) {
+  noteId = event.pathParameters.noteId;
+}
 
   if (!noteId) {
   throw new Error("noteId es obligatorio");

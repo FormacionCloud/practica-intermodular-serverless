@@ -46,10 +46,17 @@ export const handler = async (event) => {
   }
 
   // TODO: Obtener campos del cuerpo de la petición en caso de ser necesario
-  const { noteId, text } = JSON.parse(event.body || "{}");
+  //const { noteId, text } = JSON.parse(event.body || "{}");
+  // noteId viene de la URL
+  const noteId = event.pathParameters?.noteId;
+  const body = JSON.parse(event.body || "{}");
+  // text viene dentro de attributes
+  const text = body?.attributes?.text;
+
   if (!noteId || !text) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({ message: "noteId y text son obligatorios" }),
     };
   }

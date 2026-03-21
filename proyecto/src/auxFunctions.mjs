@@ -32,15 +32,28 @@ async function getNotesByUser(userId) {
   // clave de partición
   var params = {
     TableName: tableName,
+    KeyConditionExpression: "userId = :userId",
     ExpressionAttributeValues: {
       ":userId": userId,
     },
-    KeyConditionExpression: "userId= :userId",
   };
 
   // Petición a DynamoDB
   const data = await ddbDocClient.send(new QueryCommand(params));
-  return data.Items;
+  const items = data.Items;  
+
+  // Si hay una nota y tiene audioKey, indicamos que tiene audio
+if (items && items.length > 0) {
+    items.forEach(item => {
+      if (item.audioKey) {
+        // Añadimos esta bandera para que el frontend sepa que hubo un audio
+        item.hasAudio = true;
+        // Al NO añadir 'audioUrl', el frontend lo mostrará como "Caducado"
+      }
+    });
+  }
+  
+  return items;
 }
 
 // Función para crear una nota para un usuario
@@ -101,9 +114,18 @@ async function putNote(userId, noteId, text) {
 
 async function processNote(userId, noteId) {
   console.log("Processing note:", userId, noteId);
+  
+  const params = {
+    TableName: tableName,
+    KeyConditionExpression: "userId = :userId AND noteId = :noteId",
+    ExpressionAttributeValues: {
+      ":userId": userId,
+      ":noteId": noteId,
+    },
+  };
 
-  // 1. Obtener la nota
-  const items = await getNoteByUser(userId, noteId);
+  const data = await ddbDocClient.send(new QueryCommand(params));
+  const items = data.Items;
 
   if (!items || items.length === 0) {
     throw new Error("Nota no encontrada");
@@ -111,51 +133,52 @@ async function processNote(userId, noteId) {
 
   const text = items[0].text;
 
-  // 2. Generar audio con Polly
-  const mp3Buffer = await textToSpeech(text);
-
-  // 3. Subir a S3
-  const key = `${userId}/${noteId}.mp3`;
-  const bucketName = process.env.APP_S3;
-
-  await uploadToS3(mp3Buffer, key);
-
-  // 4. Generar URL prefirmada (5 min)
-  const command = new GetObjectCommand({
-    Bucket: bucketName,
-    Key: key,
-  });
-
-  const signedUrl = await getSignedUrl(s3Client, command, {
-    expiresIn: 300, // 5 minutos
-  });
-  console.info("Url del Mp3", signedUrl);
-
-  // 5. Traducir texto
-  const translateCmd = new TranslateTextCommand({
-    Text: text,
+  // 1. Traducir
+  const translateCommand = new TranslateTextCommand({
     SourceLanguageCode: "es",
     TargetLanguageCode: "en",
+    Text: text,
   });
+  const translateRes = await translateClient.send(translateCommand);
+  const translatedText = translateRes.TranslatedText;
+  
+  // 2. Generar audio con Polly
+  const audioBuffer = await textToSpeech(translatedText);
 
-  const translateResponse = await translateClient.send(translateCmd);
-  const translatedText = translateResponse.TranslatedText;
+  // 3. Subir a S3
+  const audioKey = `${userId}/${noteId}.mp3`;
+  await uploadToS3(audioBuffer, audioKey);
 
-  // 6. Actualizar DynamoDB (añadir translation)
-  await ddbDocClient.send(new UpdateCommand({
+  // 4. Generar URL prefirmada (5 min)
+  const getCommand = new GetObjectCommand({
+    Bucket: process.env.APP_S3,
+    Key: audioKey,
+  });
+  const signedUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 300 });
+  // 5. Actualizar DynamoDB
+  const updateCommand = new UpdateCommand({
     TableName: tableName,
     Key: { userId, noteId },
-    UpdateExpression: "SET #translation = :t",
+    UpdateExpression: "SET #translation = :t, #audioKey = :a",
     ExpressionAttributeNames: {
-    "#translation": "translation",
+      "#translation": "translation",
+      "#audioKey": "audioKey",
     },
     ExpressionAttributeValues: {
       ":t": translatedText,
+      ":a": audioKey,
     },
-  }));
+  });
+  await ddbDocClient.send(updateCommand);
 
   // 7. Devolver URL
-  return signedUrl;
+  return {
+  noteId: noteId,  
+  audioUrl: signedUrl,
+  noteText: text,
+  translation: translatedText,
+  };
+
 }  
 
 // Función que recibe un texto de una nota y devuelve un buffer con los datos sintetizados por Polly
