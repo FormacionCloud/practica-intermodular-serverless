@@ -26,34 +26,59 @@ const tableName = process.env.APP_TABLE;
 
 // Función para obtener las notas de un usuario
 async function getNotesByUser(userId) {
-  // Parámetros de la petición de DynamoDB
-  // Hacemos una query indicando una condición de igualdad en la clave de partición
-  // Asumiendo que el esquema de la tabla haga referencia al userId como valor de la
-  // clave de partición
-  var params = {
+  const params = {
     TableName: tableName,
     KeyConditionExpression: "userId = :userId",
-    ExpressionAttributeValues: {
-      ":userId": userId,
-    },
+    ExpressionAttributeValues: { ":userId": userId },
   };
 
-  // Petición a DynamoDB
   const data = await ddbDocClient.send(new QueryCommand(params));
-  const items = data.Items;  
+  const items = data.Items || [];  
+  const now = Date.now();
+  const expirationThresholdMs = 5 * 60 * 1000;
 
-  // Si hay una nota y tiene audioKey, indicamos que tiene audio
-if (items && items.length > 0) {
-    items.forEach(item => {
-      if (item.audioKey) {
-        // Añadimos esta bandera para que el frontend sepa que hubo un audio
-        item.hasAudio = true;
-        // Al NO añadir 'audioUrl', el frontend lo mostrará como "Caducado"
+  // Usamos Promise.all con map para procesar cada nota de forma independiente
+  const processedItems = await Promise.all(items.map(async (item) => {
+    
+    // Si la nota no tiene audio procesado, la devolvemos tal cual
+    if (!item.audioKey || !item.audioGeneratedAt) {
+      return { ...item, hasAudio: false, audioUrl: null };
+    }
+
+    const generatedAt = Number(item.audioGeneratedAt);
+    const timeElapsed = now - generatedAt;
+
+    // --- LOGICA DE DECISIÓN ---
+    
+    if (timeElapsed < expirationThresholdMs) {
+      // CASO A: NO HA CADUCADO -> Generamos la URL solo para esta
+      try {
+        const getCommand = new GetObjectCommand({
+          Bucket: process.env.APP_S3,
+          Key: item.audioKey,
+        });
+        const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 300 });
+        
+        return { 
+          ...item, 
+          audioUrl: url, 
+          hasAudio: true 
+        };
+      } catch (err) {
+        console.error("Error con S3:", err);
+        return { ...item, audioUrl: "error", hasAudio: true };
       }
-    });
-  }
-  
-  return items;
+    } else {
+      // CASO B: YA CADUCÓ -> No llamamos a S3, marcamos como expired directamente
+      return { 
+        ...item, 
+        audioUrl: "expired", 
+        hasAudio: true 
+      };
+    }
+  }));
+
+  return processedItems;
 }
 
 // Función para crear una nota para un usuario
@@ -71,23 +96,49 @@ async function postNoteForUser(userId, noteId, text) {
 }
 
 async function getNoteByUser(userId, noteId) {
-  // Parámetros de la petición de DynamoDB
-  // Hacemos una query indicando una condición de igualdad en la clave de partición
-  // Asumiendo que el esquema de la tabla haga referencia al userId como valor de la
-  // clave de partición
-  var params = {
+  const params = {
     TableName: tableName,
+    KeyConditionExpression: "userId = :userId AND noteId = :noteId",
     ExpressionAttributeValues: {
       ":userId": userId,
       ":noteId": noteId,
     },
-    // KeyConditionExpression: "userId= :userId",
-    KeyConditionExpression: "userId= :userId AND noteId = :noteId",
   };
 
-  // Petición a DynamoDB
+  // 1. Consultar la nota en DynamoDB
   const data = await ddbDocClient.send(new QueryCommand(params));
-  return data.Items;
+  const items = data.Items;
+
+  const now = Date.now();
+  const expirationThresholdMs = 5 * 60 * 1000;
+
+if (items && items.length > 0) {
+    for (let item of items) {
+      if (item.audioKey && item.audioGeneratedAt) {
+        // que sea un numero
+        const generatedAt = Number(item.audioGeneratedAt);
+        const timeElapsed = now - generatedAt;
+
+        // Log para depuración
+        console.log(`Nota ${item.noteId}: Transcurrido ${timeElapsed}ms de ${expirationThresholdMs}ms`);
+
+        if (timeElapsed >= 0 && timeElapsed < expirationThresholdMs) {
+          // sin caducar
+          const getCommand = new GetObjectCommand({
+            Bucket: process.env.APP_S3,
+            Key: item.audioKey,
+          });
+          item.audioUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 300 });
+          item.hasAudio = true;
+        } else {
+          // caducado
+          item.audioUrl = "expired";
+          item.hasAudio = true;
+        }
+      }
+    }
+  }
+  return items;
 }
 
 async function deleteNote(userId, noteId) {
@@ -147,6 +198,7 @@ async function processNote(userId, noteId) {
 
   // 3. Subir a S3
   const audioKey = `${userId}/${noteId}.mp3`;
+  const audioGeneratedAt = Date.now(); //Guardamos el momento que lo generamos para que caduque en la vista
   await uploadToS3(audioBuffer, audioKey);
 
   // 4. Generar URL prefirmada (5 min)
@@ -159,24 +211,27 @@ async function processNote(userId, noteId) {
   const updateCommand = new UpdateCommand({
     TableName: tableName,
     Key: { userId, noteId },
-    UpdateExpression: "SET #translation = :t, #audioKey = :a",
+    UpdateExpression: "SET #translation = :t, #audioKey = :a, #audioAt = :at",
     ExpressionAttributeNames: {
       "#translation": "translation",
       "#audioKey": "audioKey",
+      "#audioAt": "audioGeneratedAt",
     },
     ExpressionAttributeValues: {
       ":t": translatedText,
       ":a": audioKey,
+      //":at": Number(audioGeneratedAt), // para que dure en el tiempo
+      ":at": audioGeneratedAt,
     },
   });
   await ddbDocClient.send(updateCommand);
 
   // 7. Devolver URL
   return {
-  noteId: noteId,  
-  audioUrl: signedUrl,
-  noteText: text,
-  translation: translatedText,
+    noteId,
+    text,
+    translation: translatedText,
+    audioUrl: signedUrl,
   };
 
 }  
