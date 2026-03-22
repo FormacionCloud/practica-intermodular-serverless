@@ -7,7 +7,7 @@ Transform:
 Parameters:
   CognitoUserPoolArn:
     Type: String
-    Default: "arn:aws:cognito-idp:us-east-1:745623467555:userpool/us-east-1_hlSZ2iI0Q"  # Pon aquí tu ARN
+    Default: "arn:aws:cognito-idp:us-east-1:697172517361:userpool/us-east-1_r3dT4dtdj"  # Pon aquí tu ARN
 
 Resources:
   # API Gateway explícito para CORS

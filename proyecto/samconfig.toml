@@ -7,7 +7,7 @@ s3_prefix = "intermodular-serverless-jose-vizcaino"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "CognitoUserPoolArn=\"arn:aws:cognito-idp:us-east-1:745623467555:userpool/us-east-1_hlSZ2iI0Q\""
+parameter_overrides = "CognitoUserPoolArn=\"arn:aws:cognito-idp:us-east-1:697172517361:userpool/us-east-1_r3dT4dtdj\""
 image_repositories = []
 
 [default.global.parameters]
