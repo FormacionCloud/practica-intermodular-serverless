@@ -1,6 +1,8 @@
 # Dependencias de Node.js
 cliente/node_modules/
 proyecto/node_modules/
+cliente con auth/node_modules/
+
 
 # Archivos de salida de pruebas
 proyecto/events/salidas/

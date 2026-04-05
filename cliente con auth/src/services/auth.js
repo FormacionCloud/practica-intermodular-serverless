@@ -6,10 +6,10 @@ const REDIRECT_URI = import.meta.env.VITE_COGNITO_REDIRECT_URI;
 
 export function login() {
   const params = new URLSearchParams({
-    response_type: 'token', 
+    response_type: 'token',
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
-    scope: '',
+    scope: 'openid',
     state: 'state-' + Math.random().toString(36).substr(2, 9),
   });
   window.location.href = `${COGNITO_DOMAIN}/oauth2/authorize?${params}`;

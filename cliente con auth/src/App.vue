@@ -25,7 +25,7 @@
       </div>
     </header>
     
-    <main v-if="isLoggedIn" class="max-w-6xl mx-auto">
+    <main v-if="loggedIn" class="max-w-6xl mx-auto">
       <NotesGrid />
     </main>
     
