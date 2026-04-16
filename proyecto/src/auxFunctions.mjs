@@ -4,11 +4,17 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   PutCommand,
+  DeleteCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate";
 
 // TODO: importar librerías adicionales (Translate)
+// Clientes para interactuar con la API de Translate
+const translateClient = new TranslateClient({ region: "us-east-1" });
 
 // Clientes para interactuar con la API de DynamoDB
 const client = new DynamoDBClient({});
@@ -50,6 +56,60 @@ async function postNoteForUser(userId, noteId, noteText) {
   return data;
 }
 
+// Función para obtener una nota concreta por su id
+async function getNote(userId, noteId) {
+  // Parámetros de la petición de DynamoDB
+  // Hacemos una query indicando una condición de igualdad en la clave de partición y en la de ordenació
+  // Asumiendo que el esquema de la tabla haga referencia al userId como valor de la
+  // clave de partición
+  var params = {
+    TableName: tableName,
+    ExpressionAttributeValues: {
+      ":userId": userId,
+      ":noteId": noteId,
+    },
+    KeyConditionExpression: "userId= :userId AND noteId= :noteId",
+  };
+
+  // Petición a DynamoDB
+  const data = await ddbDocClient.send(new QueryCommand(params));
+  return data.Items;
+}
+
+// Función para borrar una nota concreta por su id
+async function deleteNote(userId, noteId) {
+  // Parámetros de la petición de DynamoDB
+  // Hacemos una query indicando una condición de igualdad en la clave de partición y en la de ordenació
+  // Asumiendo que el esquema de la tabla haga referencia al userId como valor de la
+  // clave de partición
+  var params = {
+    TableName: tableName,
+    Key: {"userId": userId, "noteId": noteId}
+  };
+
+  // Petición a DynamoDB
+  const data = await ddbDocClient.send(new DeleteCommand(params));
+  return data;
+}
+
+
+// Función para editar una nota 
+async function putNote(userId, noteId, noteText) {
+  // Parámetros de la petición de DynamoDB
+  // Petición PUT indicando la clave primaria: partición + ordenación
+  var params = {
+    TableName: tableName,
+    Key: { userId: userId, noteId: noteId},
+  UpdateExpression: "set #t = :textValue",
+  ExpressionAttributeNames: {"#t": "text"},
+  ExpressionAttributeValues: {":textValue": noteText},
+  };
+
+  // Petición a DynamoDB
+  const data = await ddbDocClient.send(new UpdateCommand(params));
+  return data;
+}
+
 // Función que recibe un texto de una nota y devuelve un buffer con los datos sintetizados por Polly
 async function textToSpeech(text) {
   const pollyClient = new PollyClient();
@@ -77,6 +137,7 @@ async function uploadToS3(mp3Data, key) {
 
   // Obtener el nombre del bucket S3 a partir de la variable de entorno
   const bucketName = process.env.APP_S3;
+  console.log(bucketName);
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: key,
@@ -88,10 +149,73 @@ async function uploadToS3(mp3Data, key) {
 
   // TODO: modificar para devolver una URL prefirmada de S3 que permita descargar
   // el audio durante un tiempo limitado de 5 minutos
+
+  try {
+    // 2. Crear el comando para obtener el objeto (GET)
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+    });
+
+    // 3. Generar la URL prefirmada
+    // expiresIn: tiempo en segundos (5 minutos = 300 segundos)
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+    return url;
+  } catch (err) {
+    console.error("Error generando la URL prefirmada", err);
+    throw err;
+  }
   return;
+  
+  
 }
 
 // TODO: Añadir el resto de funciones necesarias de lógica de negocio
 
+async function translateAndUpdateNote(userId, noteId, textToTranslate, targetLanguage = "en") {
+  try {
+    // --- PASO 1: Llamar a AWS Translate ---
+    const translateParams = {
+      Text: textToTranslate,
+      SourceLanguageCode: "auto", // Detecta el idioma automáticamente (ej: español)
+      TargetLanguageCode: targetLanguage, // Idioma destino (ej: "en" para inglés)
+    };
+
+    const translateResponse = await translateClient.send(new TranslateTextCommand(translateParams));
+    const translatedText = translateResponse.TranslatedText;
+
+    console.log(`Traducción obtenida: ${translatedText}`);
+
+    // --- PASO 2: Actualizar DynamoDB añadiendo el nuevo campo ---
+    const updateParams = {
+      TableName: tableName,
+      Key: {
+        userId: userId,
+        noteId: noteId
+      },
+      // Usamos SET para añadir o actualizar el campo 'translation'
+      UpdateExpression: "SET #transField = :transValue",
+      ExpressionAttributeNames: {
+        "#transField": "translation" // Nombre del nuevo campo en la tabla
+      },
+      ExpressionAttributeValues: {
+        ":transValue": translatedText
+      },
+      ReturnValues: "UPDATED_NEW"
+    };
+
+    await ddbDocClient.send(new UpdateCommand(updateParams));
+    
+    return {
+        success: true,
+        translation: translatedText
+    };
+
+  } catch (error) {
+    console.error("Error en el proceso de traducción y guardado:", error);
+    throw error;
+  }
+}
+
 // TODO: Exportar las funciones creadas
-export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3 };
+export { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3, getNote, deleteNote, putNote, translateAndUpdateNote };

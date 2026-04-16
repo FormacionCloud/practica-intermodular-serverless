@@ -1,0 +1,7 @@
+Clave de Patticion: Usuario (userId)
+Calve de ordenación: Nota (Identificador de Nota) noteId
+
+Lo haría asi para permitir las consultas de todas las notas de un
+usuario y la consulta de una nita en particular.
+Si no se hiciera asi para acceder a la una nota en concreto la consulta sería
+más complicada y mas costosa

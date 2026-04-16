@@ -164,7 +164,7 @@ Resources:
         - x86_64
       MemorySize: 512
       Timeout: 30
-      Description: Polly + S3 + Translate
+      Description: Polly + S3 + Translate + Comprehend
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AppTable
@@ -176,6 +176,7 @@ Resources:
               Action:
                 - polly:SynthesizeSpeech
                 - translate:TranslateText
+                - comprehend:DetectDominantLanguage
               Resource: '*'
       Environment:
         Variables:

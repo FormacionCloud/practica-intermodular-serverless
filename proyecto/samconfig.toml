@@ -1,0 +1,13 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "intermodular-jemn"
+resolve_s3 = true
+s3_prefix = "intermodular-jemn"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "CognitoUserPoolArn=\"arn:aws:cognito-idp:us-east-1:745623467555:userpool/us-east-1_hlSZ2iI0Q\""
+image_repositories = []
+
+[default.global.parameters]
+region = "us-east-1"

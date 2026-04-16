@@ -1,0 +1,5 @@
+{
+  "httpMethod": "DELETE",
+  "path": "/notes/{id}",
+  "body": "{\"noteId\": \"id1\"}"
+}
