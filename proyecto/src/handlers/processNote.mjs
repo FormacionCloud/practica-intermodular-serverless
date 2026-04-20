@@ -6,6 +6,13 @@ import * as libreria from "../auxFunctions.mjs";
 // Por ello, el evento tendrá el formato descrito en la documentación:
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
+// Headers CORS
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
+
 // Handler
 export const handler = async (event) => {
   // TODO: reemplazar METODO por método apropiado (PUT, POST, GET,...)
@@ -38,9 +45,12 @@ export const handler = async (event) => {
     username = "testuser";
   }
 
-  var noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
+  // var noteData = JSON.parse(event.pathParameters); // Convertimos de JSON a objeto javascript
+  var noteData = JSON.parse(event.body); 
   // TODO: Obtener campos del cuerpo de la petición en caso de ser necesario
-  var noteId = noteData.noteId;
+  // var noteId = noteData.noteId;
+  // var noteId = noteData ? noteData.noteId : null;
+  var noteId = event.pathParameters ? event.pathParameters.noteId : null;
   var response;
 
   try {
@@ -58,21 +68,24 @@ export const handler = async (event) => {
     var URL = await libreria.uploadToS3(buffer, noteId)
     console.log(URL);
     // Traduzco y actualizo dynamoDB
-    await libreria.translateAndUpdateNote(userId, noteId, Texto, "en");
-    
+    var translatedText = await libreria.translateAndUpdateNote(userId, noteId, Texto, "en", URL);
+    console.log(translatedText);
     // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:
     // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
     response = {
       // TODO: cambiar y añadir campos necesarios
       statusCode: 200,
-      body: URL,
+      headers: corsHeaders,
+      body: JSON.stringify(translatedText),
     };
+    
   } catch (err) {
     console.log("Error", err);
     // Si la consulta genera error, devolvemos una descripción del error y código 400, con el mismo formato
     var errorMessage = { message: "Ha habido un problema" };
     response = {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify(errorMessage),
     };
   }
@@ -82,4 +95,5 @@ export const handler = async (event) => {
   );
 
   return response;
+
 };

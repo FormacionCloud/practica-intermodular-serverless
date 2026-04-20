@@ -6,6 +6,13 @@ import * as libreria from "../auxFunctions.mjs";
 // Por ello, el evento tendrá el formato descrito en la documentación:
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
+// Headers CORS
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
+
 // Handler
 export const handler = async (event) => {
   // TODO: reemplazar METODO por método apropiado (PUT, POST, GET,...)
@@ -43,17 +50,21 @@ export const handler = async (event) => {
   var noteData = JSON.parse(event.body); // Convertimos de JSON a objeto javascript
   
   // TODO: Obtener campos del cuerpo de la petición en caso de ser necesario
-  var noteId = noteData.noteId;
+  //var noteId = noteData.noteId;
+  var noteId = event.pathParameters ? event.pathParameters.noteId : null;
   var response;
 
   try {
     // TODO: Llamar a la función de la librería encargada de realizar el procesamiento o los procesamientos necesarios
     var item = await libreria.getNote(userId, noteId); 
+    var texto = JSON.stringify(item);
+    
     // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:
     // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
     response = {
       // TODO: cambiar y añadir campos necesarios
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify(item),
     };
   } catch (err) {
@@ -62,6 +73,7 @@ export const handler = async (event) => {
     var errorMessage = { message: "Ha habido un problema" };
     response = {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify(errorMessage),
     };
   }

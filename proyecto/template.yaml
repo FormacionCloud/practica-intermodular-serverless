@@ -19,12 +19,12 @@ Resources:
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key'"
         AllowOrigin: "'*'"
-      Auth:
-        DefaultAuthorizer: CognitoAuthorizer
-        Authorizers:
-          CognitoAuthorizer:
-            UserPoolArn: !Ref CognitoUserPoolArn
-        AddDefaultAuthorizerToCorsPreflight: false
+      # Auth:
+        # DefaultAuthorizer: CognitoAuthorizer
+        # Authorizers:
+          # CognitoAuthorizer:
+            # UserPoolArn: !Ref CognitoUserPoolArn
+        # AddDefaultAuthorizerToCorsPreflight: false
         
   # Función Lambda para obtener las notas de un usuario
   getNotes:

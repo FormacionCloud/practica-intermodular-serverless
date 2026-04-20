@@ -62,6 +62,7 @@ async function getNote(userId, noteId) {
   // Hacemos una query indicando una condición de igualdad en la clave de partición y en la de ordenació
   // Asumiendo que el esquema de la tabla haga referencia al userId como valor de la
   // clave de partición
+  console.log("noteId:", noteId);
   var params = {
     TableName: tableName,
     ExpressionAttributeValues: {
@@ -160,6 +161,7 @@ async function uploadToS3(mp3Data, key) {
     // 3. Generar la URL prefirmada
     // expiresIn: tiempo en segundos (5 minutos = 300 segundos)
     const url = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+  
     return url;
   } catch (err) {
     console.error("Error generando la URL prefirmada", err);
@@ -172,7 +174,7 @@ async function uploadToS3(mp3Data, key) {
 
 // TODO: Añadir el resto de funciones necesarias de lógica de negocio
 
-async function translateAndUpdateNote(userId, noteId, textToTranslate, targetLanguage = "en") {
+async function translateAndUpdateNote(userId, noteId, textToTranslate, targetLanguage = "en", URL) {
   try {
     // --- PASO 1: Llamar a AWS Translate ---
     const translateParams = {
@@ -194,12 +196,16 @@ async function translateAndUpdateNote(userId, noteId, textToTranslate, targetLan
         noteId: noteId
       },
       // Usamos SET para añadir o actualizar el campo 'translation'
-      UpdateExpression: "SET #transField = :transValue",
+      UpdateExpression: "SET #transField = :transValue, #audioUrl = :audioUrl",
       ExpressionAttributeNames: {
-        "#transField": "translation" // Nombre del nuevo campo en la tabla
+        "#transField": "translation",
+        "#audioUrl": "audioUrl"
+        // Nombre del nuevo campo en la tabla
       },
       ExpressionAttributeValues: {
-        ":transValue": translatedText
+        ":transValue": translatedText,
+        ":audioUrl": URL
+
       },
       ReturnValues: "UPDATED_NEW"
     };
