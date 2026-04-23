@@ -7,7 +7,16 @@ Transform:
 Parameters:
   CognitoUserPoolArn:
     Type: String
-    Default: "arn:aws:cognito-idp:us-east-1:745623467555:userpool/us-east-1_hlSZ2iI0Q"  # Pon aquí tu ARN
+    Default: "arn:aws:cognito-idp:us-east-1:536898554073:userpool/us-east-1_Mhb0NNLxD"  # Pon aquí tu ARN
+
+Globals:
+  Function:
+    Tracing: Active
+    Layers:
+      - 'arn:aws:lambda:us-east-1:615299751070:layer:AWSOpenTelemetryDistroJs:11'
+    Environment:
+      Variables:
+        AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-instrument
 
 Resources:
   # API Gateway explícito para CORS
@@ -19,12 +28,12 @@ Resources:
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key'"
         AllowOrigin: "'*'"
-      # Auth:
-        # DefaultAuthorizer: CognitoAuthorizer
-        # Authorizers:
-          # CognitoAuthorizer:
-            # UserPoolArn: !Ref CognitoUserPoolArn
-        # AddDefaultAuthorizerToCorsPreflight: false
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Ref CognitoUserPoolArn
+        AddDefaultAuthorizerToCorsPreflight: false
         
   # Función Lambda para obtener las notas de un usuario
   getNotes:
