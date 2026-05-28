@@ -1,0 +1,1 @@
+{"errorType":"TypeError","errorMessage":"Cannot read properties of undefined (reading 'noteId')","trace":["TypeError: Cannot read properties of undefined (reading 'noteId')","    at Runtime.handler (file:///var/task/src/handlers/getNote.mjs:26:39)","    at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1306:29)"]}

@@ -1,0 +1,234 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Pr\xE1ctica intermodular serverless"
+Transform:
+- AWS::Serverless-2016-10-31
+Resources:
+  NotesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: '''GET,POST,PUT,DELETE,OPTIONS'''
+        AllowHeaders: '''Content-Type,Authorization,X-Amz-Date,X-Api-Key'''
+        AllowOrigin: '''*'''
+  postNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/postNotes.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: "Funci\xF3n para crear una nota en la tabla"
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AppTable
+      Environment:
+        Variables:
+          APP_TABLE:
+            Ref: AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NotesApi
+            Path: /notes
+            Method: POST
+      CodeUri: postNotes
+    Metadata:
+      SamResourceId: postNotes
+  deleteNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/deleteNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: "Funci\xF3n para crear una nota en la tabla"
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AppTable
+      Environment:
+        Variables:
+          APP_TABLE:
+            Ref: AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NotesApi
+            Path: /notes/{noteId}
+            Method: DELETE
+      CodeUri: deleteNote
+    Metadata:
+      SamResourceId: deleteNote
+  getNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: "Funci\xF3n para crear una nota en la tabla"
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AppTable
+      Environment:
+        Variables:
+          APP_TABLE:
+            Ref: AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NotesApi
+            Path: /notes/{noteId}
+            Method: get
+      CodeUri: getNote
+    Metadata:
+      SamResourceId: getNote
+  processNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/processNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: "Funci\xF3n para crear una nota en la tabla"
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AppTable
+      - S3CrudPolicy:
+          BucketName:
+            Ref: NotesAudioBucket
+      - Statement:
+        - Effect: Allow
+          Action:
+          - polly:SynthesizeSpeech
+          Resource: '*'
+      - Statement:
+        - Effect: Allow
+          Action:
+          - translate:TranslateText
+          Resource: '*'
+      - Statement:
+        - Effect: Allow
+          Action:
+          - comprehend:DetectDominantLanguage
+          Resource: '*'
+      Environment:
+        Variables:
+          APP_TABLE:
+            Ref: AppTable
+          APP_S3:
+            Ref: NotesAudioBucket
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NotesApi
+            Path: /notes/{noteId}/process
+            Method: POST
+      CodeUri: processNote
+    Metadata:
+      SamResourceId: processNote
+  putNote:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/putNote.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: "Funci\xF3n para crear una nota en la tabla"
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AppTable
+      Environment:
+        Variables:
+          APP_TABLE:
+            Ref: AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NotesApi
+            Path: /notes/{noteId}
+            Method: PUT
+      CodeUri: putNote
+    Metadata:
+      SamResourceId: putNote
+  getNotes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getNotes.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 5
+      Description: "Funci\xF3n para leer las notas de la tabla"
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AppTable
+      Environment:
+        Variables:
+          APP_TABLE:
+            Ref: AppTable
+      Events:
+        GetNotesApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NotesApi
+            Path: /notes
+            Method: get
+      CodeUri: getNotes
+    Metadata:
+      SamResourceId: getNotes
+  AppTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: userId
+        AttributeType: S
+      - AttributeName: noteId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: userId
+        KeyType: HASH
+      - AttributeName: noteId
+        KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+  NotesAudioBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: ${AWS::StackName}-notes-audio
+      AccessControl: Private
+Outputs:
+  getNotesFunctionName:
+    Value:
+      Ref: getNotes
+  postNotesFunctionName:
+    Value:
+      Ref: postNotes
