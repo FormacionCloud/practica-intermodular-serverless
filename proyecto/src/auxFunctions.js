@@ -19,6 +19,10 @@ const tableName = process.env.APP_TABLE;
 
 // Función para obtener las notas de un usuario
 async function getNotesByUser(userId) {
+  // Parámetros de la petición de DynamoDB
+  // Hacemos una query indicando una condición de igualdad en la clave de partición
+  // Asumiendo que el esquema de la tabla haga referencia al userId como valor de la
+  // clave de partición
   var params = {
     TableName: tableName,
     ExpressionAttributeValues: {
@@ -27,17 +31,21 @@ async function getNotesByUser(userId) {
     KeyConditionExpression: "userId= :userId",
   };
 
+  // Petición a DynamoDB
   const data = await ddbDocClient.send(new QueryCommand(params));
   return data.Items;
 }
 
 // Función para crear una nota para un usuario
 async function postNoteForUser(userId, noteId, noteText) {
+  // Parámetros de la petición de DynamoDB
+  // Petición PUT indicando la clave primaria: partición + ordenación
   var params = {
     TableName: tableName,
     Item: { userId: userId, noteId: noteId, text: noteText },
   };
 
+  // Petición a DynamoDB
   const data = await ddbDocClient.send(new PutCommand(params));
   return data;
 }
@@ -48,12 +56,13 @@ async function textToSpeech(text) {
   const command = new SynthesizeSpeechCommand({
     Text: text,
     OutputFormat: "mp3",
-    VoiceId: "Lucia",
+    VoiceId: "Lucia", // Puedes cambiar este valor si lo deseas. Consulta la doc de Polly
   });
 
   const response = await pollyClient.send(command);
   const audioStream = response.AudioStream;
 
+  // Convertir a buffer
   const chunks = [];
   for await (const chunk of audioStream) {
     chunks.push(chunk);
@@ -66,6 +75,7 @@ async function textToSpeech(text) {
 async function uploadToS3(mp3Data, key) {
   const s3Client = new S3Client();
 
+  // Obtener el nombre del bucket S3 a partir de la variable de entorno
   const bucketName = process.env.APP_S3;
   const command = new PutObjectCommand({
     Bucket: bucketName,
@@ -83,4 +93,5 @@ async function uploadToS3(mp3Data, key) {
 
 // TODO: Añadir el resto de funciones necesarias de lógica de negocio
 
+// TODO: Exportar las funciones creadas
 module.exports = { getNotesByUser, postNoteForUser, textToSpeech, uploadToS3 };
