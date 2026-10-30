@@ -6,6 +6,14 @@ const libreria = require("../auxFunctions");
 // Por ello, el evento tendrá el formato descrito en la documentación:
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
+// Headers CORS
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "Content-Type,Authorization,X-Amz-Date,X-Api-Key",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+};
+
 // Handler
 const handler = async (event) => {
   // Si no se recibe el método POST, se genera un error
@@ -52,6 +60,7 @@ const handler = async (event) => {
     // Resultado que devuelve la función, de acuerdo con el formato descrito en la documentación:
     // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
     var response = {
+      headers: corsHeaders,
       statusCode: 201,
     };
   } catch (err) {
@@ -60,6 +69,7 @@ const handler = async (event) => {
     var errorMessage = { message: "Ha habido un problema al crear la nota" };
     response = {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify(errorMessage),
     };
   }
